@@ -1,0 +1,23 @@
+# Generated outputs and private state
+outputs/
+**/bin/
+**/obj/
+**/build/
+**/.vs/
+**/state-*/
+**/private-data/
+**/downloads/
+work/android-build/
+work/portal-selfcontained/
+*.apk
+*.img
+*.qcow2
+*.p12
+*.pfx
+*.pem
+*.key
+*.log
+container.json
+notes.json
+.env
+__pycache__/
