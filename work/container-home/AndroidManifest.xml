@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="local.asiair.home" android:versionCode="3" android:versionName="0.3.0">
+  <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="30"/>
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+  <queries><package android:name="com.zwoasi.asiair"/><package android:name="com.touptek.astrostation"/><package android:name="com.android.vending"/><intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent></queries>
+  <application android:label="Astro Home" android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false" android:usesCleartextTraffic="false">
+    <activity android:name=".HomeActivity" android:exported="true" android:launchMode="singleTask" android:excludeFromRecents="true">
+      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.HOME"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+    </activity>
+    <activity android:name=".OthersActivity" android:exported="true" android:launchMode="singleTask" android:taskAffinity="local.asiair.others" android:resizeableActivity="false"/>
+    <activity android:name=".InputCheckActivity" android:exported="true" android:screenOrientation="landscape"/>
+    <activity android:name=".LocationCheckActivity" android:exported="true"/>
+  </application>
+</manifest>
