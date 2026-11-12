@@ -26,4 +26,4 @@ The [Google Play image documentation](https://developer.android.com/studio/run/m
 4. Do not include vendor APKs, operating-system images, account state or private keys.
 5. Recheck the exact release artifact, upstream versions and terms. Do not describe this review as vendor approval or legal clearance.
 
-A source-only repository reduces redistribution exposure; it does not certify that every future use, build or distribution is permitted. No prebuilt installer is published by this source snapshot.
+A source-only repository reduces redistribution exposure; it does not certify that every future use, build or distribution is permitted. An experimental installer is now published separately at the repository owner's request. It bundles the original launcher/helper and the .NET runtime with notices; Android components and vendor apps are downloaded separately. Publication does not resolve the permitted-use questions above or constitute legal clearance.
