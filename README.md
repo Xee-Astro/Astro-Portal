@@ -2,7 +2,7 @@
 
 Experimental Windows launcher for the **original ASIAIR and Stellavita Android apps**, using a dedicated Android emulator and an embedded scrcpy display. This project is independent of ZWO, ToupTek, Google, Microsoft, and Genymobile.
 
-**Source-only publication.** No vendor APKs, Google Play images, Android runtime, personal profiles, or signing keys are distributed here. The Android SDK has restrictions on redistribution and permitted use. This project has **not** received vendor approval or a legal compliance certification. Read [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing review](docs/LICENSING_REVIEW.md) before building, downloading dependencies, or distributing a package.
+**Source and experimental installer.** [Download the Windows installer ZIP](https://github.com/Xee-Astro/Astro-Portal/releases/tag/v0.5.0-preview). No vendor APKs, Google Play images, Android emulator runtime, personal profiles, or private signing keys are bundled in the installer. The launcher includes its own .NET runtime. The Android SDK has restrictions on redistribution and permitted use. This project has **not** received vendor approval or a legal compliance certification. Read [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing review](docs/LICENSING_REVIEW.md) before building, downloading dependencies, or distributing a package.
 
 ## Features
 
@@ -32,8 +32,8 @@ The built launcher includes .NET. End users do not need to separately install Ja
 
 1. Review the [licensing review](docs/LICENSING_REVIEW.md), [prerequisites and setup](docs/INSTALLATION.md), and vendor terms.
 2. Download this repository using **Code → Download ZIP**, or clone it.
-3. Follow [BUILDING.md](BUILDING.md) to compile the launcher/helper and generate a setup ZIP locally. There is no approved prebuilt runtime bundle in this repository.
-4. Extract your locally built setup and run `Install.cmd`. Setup shows its plan and asks Yes/No for each stage.
+3. Download `Astro-Portal-Setup.zip` from the [experimental release](https://github.com/Xee-Astro/Astro-Portal/releases/tag/v0.5.0-preview), or follow [BUILDING.md](BUILDING.md) to build it. The installer downloads Android separately; third-party permitted-use questions remain unresolved.
+4. Extract the setup ZIP and run `Install.cmd`. Setup shows its plan and asks Yes/No for each stage.
 5. Choose an **empty installation destination**. Setup files and installation destination are separate locations.
 6. Use **Install ASIAIR** / **Install Stellavita** in the launcher, subject to vendor terms. Google Play and Install APK are under Advanced.
 
