@@ -20,6 +20,8 @@ public sealed partial class MainWindow
                 await RunWorkspaceActionAsync(() => OpenPaneAsync(id),false);
                 if (!PaneRunning(id)) throw new IOException(WorkspacePanes.Label(id) + " did not start: " + status.Text);
             }
+            await RunWorkspaceActionAsync(() => OpenPaneAsync(WorkspacePane.Other),false);
+            await runtime.AssertAppDisplayTasksAsync(lifetime.Token); await cloneRuntime!.AssertAppDisplayTasksAsync(lifetime.Token);
             await runtime.AssertSeparateProfileAsync(cloneRuntime!,lifetime.Token);
             await RunWorkspaceActionAsync(ShowWorkspaceSplitAsync,false);
             if (selectedPanes.Count != 4) throw new IOException("Split did not select all four running astronomy instances.");

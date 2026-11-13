@@ -81,6 +81,12 @@ public sealed partial class RuntimeController
             if (mode == "5") await ShellAsync(token, "am", "task", "resize", task.Id.ToString(), "0", "0", "1600", "1000");
         }
     }
+    public async Task AssertAppDisplayTasksAsync(CancellationToken token)
+    {
+        var tasks = await ReadTasksAsync(token);
+        foreach (var session in appDisplays.Values.Where(s=>s.IsAlive))
+            if (!tasks.Any(t=>t.Package==session.Package && t.Display==session.DisplayId && t.Visible)) throw new IOException("Home navigation disturbed an astronomy display.");
+    }
     public async Task CloseAppDisplayAsync(string package, CancellationToken token)
     {
         await ShellAsync(token, "am", "force-stop", package);

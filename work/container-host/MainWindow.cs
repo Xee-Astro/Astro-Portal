@@ -49,7 +49,7 @@ public sealed partial class MainWindow : Window
         runtime.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; Trace(message); });
         runtime.DisplayExited += () => Dispatcher.InvokeAsync(async () => { if (!busy && !closing) await StopAsync(); });
         start.Click += async (_, _) => await OpenOrInstallAsync(false); stop.Click += async (_, _) => await StopAsync(); Closing += OnClosing;
-        displayFit.Tick += (_, _) => { foreach (var pane in paneSurfaces.Values) if (pane.View.IsAttached) pane.View.Fit(); }; displayFit.Start(); SetBusy(false);
+        displayFit.Tick += (_, _) => { foreach (var pane in paneSurfaces.Values) if (pane.View.IsAttached) { pane.View.Fit(); if (pane.View.HasNativeFocus) focusedPane = pane.Id; } }; displayFit.Start(); SetBusy(false);
     }
     private Task StartAsync() => RunWorkspaceActionAsync(() => Task.CompletedTask, false);
     private async Task StartCoreAsync()

@@ -101,6 +101,7 @@ public sealed class EmbeddedView : HwndHost
         if (child != 0 && IsWindow(child)) { ShowWindow(child, 0); SetWindowLongPtr(child, -8, 0); }
         child = owner = 0;
     }
+    public bool HasNativeFocus => IsAttached && GetForegroundWindow() == child;
     public bool IsAttached => host != 0 && child != 0 && GetWindowLongPtr(child, -8) == owner && IsWindow(child);
     public void Fit() => ResizeChild();
     public void ClickGuest(double x, double y, double guestWidth, double guestHeight)

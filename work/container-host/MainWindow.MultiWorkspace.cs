@@ -25,6 +25,7 @@ public sealed partial class MainWindow
     private Grid workspaceSurface = null!;
     private WrapPanel paneChoices = null!;
     private bool workspaceSplit;
+    private WorkspacePane focusedPane = WorkspacePane.Other;
     private RuntimeController? cloneRuntime;
     private readonly CheckBox cloneAsiair = new() { Content = "Clone", Margin = new(3, 5, 0, 0) };
     private readonly CheckBox cloneStellavita = new() { Content = "Clone", Margin = new(3, 5, 0, 0) };
@@ -137,7 +138,12 @@ public sealed partial class MainWindow
             pane.Session = await ControllerFor(id).OpenAppDisplayAsync(WorkspacePanes.Package(id)!,lifetime.Token);
             pane.Frame.Visibility = Visibility.Visible; pane.View.Visibility = Visibility.Visible; UpdateLayout(); pane.View.Attach(pane.Session.Window); pane.View.SetInputEnabled(false);
         }
-        zoomRestore = null; workspaceSplit = false; selectedPanes.Clear(); selectedPanes.Add(id); ReflowWorkspace();
+        zoomRestore = null; workspaceSplit = false; focusedPane = id; selectedPanes.Clear(); selectedPanes.Add(id); ReflowWorkspace();
+    }
+    private Task NavigateWorkspaceBackAsync()
+    {
+        var id = selectedPanes.Contains(focusedPane) && PaneRunning(focusedPane) ? focusedPane : selectedPanes.First();
+        return ControllerFor(id).NavigateAsync(false,lifetime.Token,paneSurfaces[id].Session?.DisplayId ?? 0);
     }
     private Task ShowWorkspaceSplitAsync()
     {

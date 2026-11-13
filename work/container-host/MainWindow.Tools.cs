@@ -40,7 +40,7 @@ public sealed partial class MainWindow
         splitScreen.Click += async (_, _) => await RunWorkspaceActionAsync(ShowWorkspaceSplitAsync, false);
         fullScreenButton.Click += async (_, _) => await ChangePresentationAsync(true);
         autoStartAndroid.Click += (_, _) => SaveToolOptions();
-        AddAppButton(apps, "Back", () => runtime.NavigateAsync(false, lifetime.Token));
+        AddAppButton(apps, "Back", NavigateWorkspaceBackAsync);
         
         
         BuildAndroidFontControls(apps);

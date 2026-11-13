@@ -37,8 +37,8 @@ public sealed partial class RuntimeController
         string? component = resolved.Split('\n').Select(x => x.Trim()).LastOrDefault(x => x.StartsWith(package + "/", StringComparison.Ordinal));
         if (component is null) { await OpenStoreAsync(package, token); return; }
         string result = package == AsiairPackage
-            ? await ShellAsync(token, "am", "start", "-W", "--windowingMode", "5", "-n", component)
-            : await ShellAsync(token, "am", "start", "-W", "-n", component);
+            ? await ShellAsync(token, "am", "start", "-W", "--display", "0", "--windowingMode", "5", "-n", component)
+            : await ShellAsync(token, "am", "start", "-W", "--display", "0", "-n", component);
         if (result.Contains("Error:", StringComparison.Ordinal)) throw new IOException(result);
     }
     public async Task OpenStoreAsync(string? package, CancellationToken token)
@@ -46,10 +46,12 @@ public sealed partial class RuntimeController
         if (!IsRunning) throw new InvalidOperationException("Start Android first.");
         if (!options.EnablePlayStore) throw new InvalidOperationException("Google Play is available in the Play Store profile.");
         string uri = package is null ? "market://details?id=com.touptek.astrostation" : "market://details?id=" + Uri.EscapeDataString(package);
-        string result = await ShellAsync(token, "am", "start", "-a", "android.intent.action.VIEW", "-d", uri, "-p", "com.android.vending");
+        string result = await ShellAsync(token, "am", "start", "--display", "0", "-a", "android.intent.action.VIEW", "-d", uri, "-p", "com.android.vending");
         if (result.Contains("Error:", StringComparison.Ordinal)) throw new IOException(result);
     }
-    public Task NavigateAsync(bool home, CancellationToken token) => ShellAsync(token, "input", "keyevent", home ? "3" : "4");
+    public Task NavigateAsync(bool home, CancellationToken token, int display = 0) => home
+        ? ShellAsync(token,"am","start","-W","--display","0","-a","android.intent.action.MAIN","-c","android.intent.category.HOME")
+        : ShellAsync(token,"input","-d",display.ToString(CultureInfo.InvariantCulture),"keyevent","4");
     public async Task SetLocationAsync(double latitude, double longitude, CancellationToken token)
     {
         if (!IsRunning) throw new InvalidOperationException("Start Android before sending location.");
