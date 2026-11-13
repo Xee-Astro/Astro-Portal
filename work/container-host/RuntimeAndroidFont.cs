@@ -8,7 +8,8 @@ public sealed partial class RuntimeController
     private async Task ApplyAndroidFontScaleCoreAsync(double scale, CancellationToken token)
     {
         ContainerOptions.ValidateFontScale(scale);
-        await ShellAsync(token, "settings", "put", "system", "font_scale", scale.ToString("0.0", CultureInfo.InvariantCulture));
+        try { await ShellAsync(token, "settings", "put", "system", "font_scale", scale.ToString("0.0", CultureInfo.InvariantCulture)); }
+        catch (IOException error) { throw new IOException("Android could not apply that font size. Choose a value from 80% to 130%.", error); }
         await AssertAndroidFontScaleAsync(scale, token);
     }
     public async Task AssertAndroidFontScaleAsync(double scale, CancellationToken token)

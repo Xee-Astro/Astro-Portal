@@ -16,6 +16,8 @@ public sealed record ContainerOptions
     public int AdbPort { get; init; } = 5039;
     public bool EnablePlayStore { get; init; } = true;
     public int AndroidApi { get; init; } = 30;
+    public bool CloneAsiair { get; init; }
+    public bool CloneStellavita { get; init; }
     public bool AutoStartAndroid { get; init; }
     public string PhoneGpsIp { get; init; } = "";
     public int PhoneGpsPort { get; init; } = 11123;
@@ -41,12 +43,13 @@ public sealed record ContainerOptions
     }
     public static void ValidateFontScale(double scale)
     {
-        if (!double.IsFinite(scale) || scale < 0.8 || scale > 2.0) throw new ArgumentException("Android font size must be between 80% and 200%.");
+        if (!double.IsFinite(scale) || scale < 0.8 || scale > 1.3) throw new ArgumentException("Android font size must be between 80% and 130%.");
     }
     public static ContainerOptions Load(string root)
     {
         string path = Path.Combine(root, "container.json");
         var result = File.Exists(path) ? JsonSerializer.Deserialize<ContainerOptions>(File.ReadAllText(path)) ?? new() : new();
+        if (double.IsFinite(result.AndroidFontScale) && result.AndroidFontScale > 1.3) result = result with { AndroidFontScale = 1.3 };
         result.Validate(); return result;
     }
     public void Save(string root) { Validate(); File.WriteAllText(Path.Combine(root, "container.json"), JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true })); }

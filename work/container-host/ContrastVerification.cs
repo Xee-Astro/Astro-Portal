@@ -41,7 +41,7 @@ public static class ContrastVerification
   Check("Stellavita labels",Color("#79B8FF"),window.Background);
   Check("status/location/update text",Color("#A4B6CD"),window.Background);
   Check("drawer and labels",window.Foreground,window.Background);
-  Check("accent heading",Color("#FFB58B"),window.Background);
+  Check("accent heading",Color("#A9D8FF"),window.Background);
   Check("placeholder",Color("#6D829C"),Brushes.Black);
   window.Loaded+=(_,_)=>window.Dispatcher.BeginInvoke(new Action(()=>{
    try{

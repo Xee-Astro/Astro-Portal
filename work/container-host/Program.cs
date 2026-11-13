@@ -15,7 +15,7 @@ public static class Program
         using var session = new LauncherSession(root, runtimeSession); if (!session.Acquired) return;
         var app = new Application(); session.Observe(app);
         if (args.Contains("--verify-contrast")) app.Startup += (_, _) => { var window = ContrastVerification.Create(root); app.MainWindow = window; window.Show(); };
-        else if (args.Contains("--verify-app") || args.Contains("--diagnose") || args.Contains("--verify-location") || args.Contains("--probe-layout") || args.Contains("--verify-landscape"))
+        else if (args.Contains("--verify-app") || args.Contains("--diagnose") || args.Contains("--verify-location") || args.Contains("--probe-layout") || args.Contains("--verify-landscape") || args.Contains("--verify-displays"))
         {
             app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             app.Startup += async (_, _) =>
@@ -26,7 +26,13 @@ public static class Program
                 try
                 {
                     runtime.VerifyFiles();
-                    if (args.Contains("--verify-landscape")) { using var token = new CancellationTokenSource(TimeSpan.FromMinutes(5)); await runtime.StartAsync(token.Token); await runtime.VerifyLandscapeAsync(token.Token); }
+                    if (args.Contains("--verify-displays"))
+                    {
+                        using var token = new CancellationTokenSource(TimeSpan.FromMinutes(6));
+                        await runtime.StartAsync(token.Token);
+                        await runtime.VerifyAppDisplaysAsync(token.Token);
+                    }
+                    else if (args.Contains("--verify-landscape")) { using var token = new CancellationTokenSource(TimeSpan.FromMinutes(5)); await runtime.StartAsync(token.Token); await runtime.VerifyLandscapeAsync(token.Token); }
                     else if (args.Contains("--probe-layout")) { using var token = new CancellationTokenSource(TimeSpan.FromMinutes(5)); await runtime.StartAsync(token.Token); await runtime.ProbeLandscapeAsync(token.Token); }
                     else if (args.Contains("--verify-location"))
                     {
@@ -60,6 +66,7 @@ public static class Program
             if (args.Contains("--verify-portal")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyPortalAsync(); };
             if (args.Contains("--verify-toolbar")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyToolbarAsync(); };
             if (args.Contains("--verify-font")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyAndroidFontAsync(); };
+            if (args.Contains("--verify-multi")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyMultiWorkspaceAsync(); };
             if (args.Contains("--verify-ui")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyPortalUiAsync(); };
             window.Show();
         };

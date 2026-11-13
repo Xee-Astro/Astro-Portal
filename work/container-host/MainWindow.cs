@@ -15,7 +15,7 @@ public sealed partial class MainWindow : Window
     private readonly Button start = new() { Content = "Start ASIAIR", Padding = new(22, 9, 22, 9), Margin = new(18, 0, 10, 0) };
     private readonly Button stop = new() { Content = "Stop", Padding = new(18, 9, 18, 9), IsEnabled = false };
     private readonly TextBlock status = new() { Text = "Ready to start your private Android environment.", Foreground = Brush("#A4B6CD"), TextWrapping = TextWrapping.Wrap };
-    private readonly TextBlock placeholder = new() { Text = "Astro - Portal\n\nYour Android apps will appear here.", FontSize = 24, Foreground = Brush("#6D829C"), TextAlignment = TextAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+    private readonly PortalSplash placeholder = new();
     private readonly Border appDrawer = new() { Visibility = Visibility.Collapsed, Background = Brush("#10151E"), Padding = new(22) };
     private readonly EmbeddedView view = new() { Visibility = Visibility.Collapsed };
     private readonly CancellationTokenSource lifetime = new();
@@ -27,10 +27,11 @@ public sealed partial class MainWindow : Window
 
     public MainWindow(string root)
     {
-        verificationMode = (Environment.GetCommandLineArgs().Contains("--verify-window") || Environment.GetCommandLineArgs().Contains("--verify-keyboard") || Environment.GetCommandLineArgs().Contains("--verify-portal") || Environment.GetCommandLineArgs().Contains("--verify-ui") || Environment.GetCommandLineArgs().Contains("--verify-toolbar") || Environment.GetCommandLineArgs().Contains("--verify-font"));
+        verificationMode = (Environment.GetCommandLineArgs().Contains("--verify-window") || Environment.GetCommandLineArgs().Contains("--verify-keyboard") || Environment.GetCommandLineArgs().Contains("--verify-portal") || Environment.GetCommandLineArgs().Contains("--verify-ui") || Environment.GetCommandLineArgs().Contains("--verify-toolbar") || Environment.GetCommandLineArgs().Contains("--verify-font") || Environment.GetCommandLineArgs().Contains("--verify-multi"));
         view.SuppressActivation = verificationMode; ShowActivated = !verificationMode;
         this.root = root; settings = ContainerOptions.Load(root); runtime = new(root, settings);
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/AsiairContainer;component/Theme.xaml", UriKind.Relative) });
+        Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri("pack://application:,,,/Assets/AstroPortal.ico"));
         Title = "Astro - Portal"; Width = Math.Min(1380, SystemParameters.WorkArea.Width); Height = Math.Min(1000, SystemParameters.WorkArea.Height); MinWidth = Math.Min(900, SystemParameters.WorkArea.Width); MinHeight = Math.Min(640, SystemParameters.WorkArea.Height);
         WindowStartupLocation = WindowStartupLocation.CenterScreen; Background = Brush("#10151E"); Foreground = Brush("#EEF3FA"); FontFamily = new("Segoe UI"); FontSize = 13;
         start.Tag = "ASIAIR"; stellaStart.Tag = "Stellavita";
@@ -40,7 +41,7 @@ public sealed partial class MainWindow : Window
         title.Children.Add(new TextBlock { Text = "Astro - Portal", FontSize = 25, FontWeight = FontWeights.SemiBold });
         
         content.Children.Add(title);
-        var screen = new Grid { Background = Brushes.Black }; screen.Children.Add(placeholder); screen.Children.Add(view); screen.Children.Add(appDrawer); BuildLoadingOverlay(screen);
+        var screen = new Grid { Background = Brushes.Black }; screen.Children.Add(placeholder); BuildWorkspaceSurface(screen); screen.Children.Add(appDrawer); BuildLoadingOverlay(screen);
         var border = new Border { Background = Brushes.Black, BorderBrush = Brush("#30415A"), BorderThickness = new(1), Child = screen };
         screenBorder = border;
         Grid.SetRow(border, 3); content.Children.Add(border); status.Margin = new(0, 13, 0, 0); Grid.SetRow(status, 6); content.Children.Add(status); Content = BuildPresentationShell(content);
@@ -48,7 +49,7 @@ public sealed partial class MainWindow : Window
         runtime.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; Trace(message); });
         runtime.DisplayExited += () => Dispatcher.InvokeAsync(async () => { if (!busy && !closing) await StopAsync(); });
         start.Click += async (_, _) => await OpenOrInstallAsync(false); stop.Click += async (_, _) => await StopAsync(); Closing += OnClosing;
-        displayFit.Tick += (_, _) => { if (view.IsAttached) view.Fit(); }; displayFit.Start(); SetBusy(false);
+        displayFit.Tick += (_, _) => { foreach (var pane in paneSurfaces.Values) if (pane.View.IsAttached) pane.View.Fit(); }; displayFit.Start(); SetBusy(false);
     }
     private Task StartAsync() => RunWorkspaceActionAsync(() => Task.CompletedTask, false);
     private async Task StartCoreAsync()
@@ -62,14 +63,15 @@ public sealed partial class MainWindow : Window
             await InitializeLocationAsync();
             status.Text = "Opening Android…";
             nint window = await runtime.OpenDisplayAsync(operation.Token);
-            view.Visibility = Visibility.Visible; view.UpdateLayout(); view.Attach(window); view.SetInputEnabled(!busy); placeholder.Visibility = Visibility.Collapsed;
+            workspaceSurface.Visibility = Visibility.Visible; view.Visibility = Visibility.Visible; UpdateLayout(); view.UpdateLayout(); view.Attach(window); view.SetInputEnabled(!busy); placeholder.Visibility = Visibility.Collapsed;
             status.Text = "Android is ready."; await RefreshAppStateAsync();
             RenderUpdateStatus();
+            SetWorkspaceLoading(true); await loadingSplash.CompleteBootAsync();
         }
         catch (Exception error)
         {
             Trace(error.ToString());
-            view.Detach(); view.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible;
+            view.Detach(); view.Visibility = Visibility.Collapsed; workspaceSurface.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible; placeholder.Reset();
             try { await runtime.StopAsync(); } catch { }
             status.Text = error is OperationCanceledException ? "Startup cancelled." : error.Message;
         }
@@ -77,9 +79,9 @@ public sealed partial class MainWindow : Window
     }
     private async Task StopAsync()
     {
-        operation?.Cancel(); locationRequest?.Cancel(); SetBusy(true); appDrawer.Visibility = Visibility.Collapsed; view.Detach(); view.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible;
+        operation?.Cancel(); locationRequest?.Cancel(); SetBusy(true); appDrawer.Visibility = Visibility.Collapsed; view.Detach(); view.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible; placeholder.Reset();
         ExitFullScreen(); hasAstroApp = false;
-        try { await runtime.StopAsync(); } catch (Exception error) { status.Text = error.Message; }
+        try { await StopMultiWorkspaceAsync(); workspaceSurface.Visibility = Visibility.Collapsed; await runtime.StopAsync(); } catch (Exception error) { status.Text = error.Message; }
         finally { SetBusy(false); UpdatePresentationButtons(); }
     }
     public async Task VerifyWindowAsync()
@@ -148,7 +150,7 @@ public sealed partial class MainWindow : Window
         others.IsEnabled = !busy; stop.IsEnabled = !busy && runtime.IsRunning;
         splitScreen.IsEnabled = !busy && runtime.IsRunning && hasAstroApp && asiairInstalled && stellaInstalled;
         if (view.IsAttached) view.SetInputEnabled(!busy);
-        UpdateAppButtons(); UpdatePresentationButtons(); UpdateAndroidFontButtons();
+        UpdateAppButtons(); UpdatePresentationButtons(); UpdateAndroidFontButtons(); UpdateMultiWorkspaceControls();
     }
     private async void OnClosing(object? sender, CancelEventArgs args)
     {

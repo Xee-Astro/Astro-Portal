@@ -13,18 +13,18 @@ public sealed partial class MainWindow
     private readonly List<(Button Launch, Button Kill, bool Stella)> appTiles = [];
     private Button? presentationExit;
     private Border loadingOverlay = null!;
-    private System.Windows.Shapes.Ellipse loadingRing = null!;
+    private PortalSplash loadingSplash = null!;
     private Window? secondary;
     private UIElement AppTile(Button launch, bool stella)
     {
         var grid = new Grid { Margin = new(0, 0, 8, 0) };
         launch.Margin = new(0); launch.MinWidth = 140; launch.MinHeight = 44; launch.Padding = new(15, 9, 32, 9);
         grid.Children.Add(launch);
-        var kill = ToolButton("×"); kill.ToolTip = "Close " + (stella ? "Stellavita" : "ASIAIR");
+        var kill = ToolButton("Ã—"); kill.ToolTip = "Close " + (stella ? "Stellavita" : "ASIAIR");
         kill.Tag = stella ? "Stellavita" : "ASIAIR"; kill.Padding = new(3, 0, 3, 0); kill.FontSize = 17;
         kill.Width = 24; kill.Height = 24; kill.Margin = new(0, 3, 3, 0); kill.HorizontalAlignment = HorizontalAlignment.Right;
         kill.VerticalAlignment = VerticalAlignment.Top; kill.Visibility = Visibility.Collapsed;
-        kill.Click += async (_, _) => await RunWorkspaceActionAsync(() => runtime.TerminateAstroAppAsync(stella ? RuntimeController.StellavitaPackage : RuntimeController.AsiairPackage, lifetime.Token), false);
+        kill.Click += async (_, _) => await RunWorkspaceActionAsync(() => StopPaneAsync(stella ? WorkspacePane.Stellavita : WorkspacePane.Asiair), false);
         grid.Children.Add(kill); appTiles.Add((launch, kill, stella)); return grid;
     }
     private async Task RefreshAppStateAsync()
@@ -66,7 +66,7 @@ public sealed partial class MainWindow
         return UpdateChecker.IsUpdateAvailable(installed, snapshot);
     }
     private Task OpenOrInstallAsync(bool stella) => (stella ? stellaInstalled : asiairInstalled)
-        ? RunWorkspaceActionAsync(() => runtime.ShowAstroAppAsync(stella ? RuntimeController.StellavitaPackage : RuntimeController.AsiairPackage, lifetime.Token))
+        ? RunWorkspaceActionAsync(() => OpenPaneAsync(stella ? WorkspacePane.Stellavita : WorkspacePane.Asiair))
         : InstallOfficialAsync(stella, false);
     private Task InstallOfficialAsync(bool stella, bool update)
     {
@@ -89,24 +89,26 @@ public sealed partial class MainWindow
     }
     private void BuildLoadingOverlay(Grid screen)
     {
-        loadingRing = new() { Width = 46, Height = 46, Stroke = Brush("#79B8FF"), StrokeThickness = 4, StrokeDashArray = new DoubleCollection { 5, 3 }, RenderTransformOrigin = new(.5, .5), RenderTransform = new RotateTransform() };
-        var panel = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        panel.Children.Add(loadingRing); panel.Children.Add(new TextBlock { Text = "Starting Android…", FontSize = 20, Margin = new(0, 18, 0, 0), HorizontalAlignment = HorizontalAlignment.Center });
+        loadingSplash = new PortalSplash();
+        var panel = new Grid(); panel.Children.Add(loadingSplash);
+        var caption = new Border { Background = Brush("#10151E"), Padding = new(14,7,14,7), CornerRadius = new(6), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new(0,0,16,16), Child = new TextBlock { Text = "Starting Android…", FontSize = 17, Foreground = Brush("#EEF3FA") } };
+        panel.Children.Add(caption);
         loadingOverlay = new() { Background = Brush("#10151E"), Child = panel, Visibility = Visibility.Collapsed };
         screen.Children.Add(loadingOverlay);
     }
     private void SetLoading(bool show)
     {
+        SetWorkspaceLoading(show);
         loadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        ((RotateTransform)loadingRing.RenderTransform).BeginAnimation(RotateTransform.AngleProperty, show ? new DoubleAnimation(0, 360, TimeSpan.FromSeconds(1.2)) { RepeatBehavior = RepeatBehavior.Forever } : null);
+        if (show) loadingSplash.BeginBoot(); else loadingSplash.Reset();
     }
     private Window SecondaryWindow(string name, UIElement body, double width = 760, double height = 600)
     {
-        var window = new Window { Owner = this, Title = "Astro - Portal · " + name, Width = width, Height = height, MinWidth = 520, MinHeight = 400, Background = Background, Foreground = Foreground, FontFamily = FontFamily, FontSize = FontSize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var window = new Window { Owner = this, Icon = Icon, Title = "Astro - Portal Â· " + name, Width = width, Height = height, MinWidth = 520, MinHeight = 400, Background = Background, Foreground = Foreground, FontFamily = FontFamily, FontSize = FontSize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         window.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/AsiairContainer;component/Theme.xaml", UriKind.Relative) });
         var dock = new DockPanel { Margin = new(20) };
         var header = new DockPanel { Margin = new(0, 0, 0, 18) };
-        var close = ToolButton("×"); close.FontSize = 22; close.ToolTip = "Close " + name; DockPanel.SetDock(close, Dock.Right); close.Click += (_, _) => window.Close(); header.Children.Add(close);
+        var close = ToolButton("Ã—"); close.FontSize = 22; close.ToolTip = "Close " + name; DockPanel.SetDock(close, Dock.Right); close.Click += (_, _) => window.Close(); header.Children.Add(close);
         header.Children.Add(new TextBlock { Text = name, FontSize = 25, VerticalAlignment = VerticalAlignment.Center }); DockPanel.SetDock(header, Dock.Top); dock.Children.Add(header);
         dock.Children.Add(new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }); window.Content = dock; return window;
     }
@@ -114,16 +116,16 @@ public sealed partial class MainWindow
     {
         if (busy || closing) return;
         if (secondary is not null) { secondary.Activate(); return; }
-        secondary = window; var previous = view.Visibility; view.Visibility = Visibility.Hidden;
+        secondary = window; var previous = view.Visibility; SetWorkspaceLoading(true); view.Visibility = Visibility.Hidden;
         try { window.ShowDialog(); }
-        finally { secondary = null; if (!closing) { view.Visibility = previous; view.Fit(); } }
+        finally { secondary = null; if (!closing) { SetWorkspaceLoading(false); view.Visibility = previous; view.Fit(); } }
     }
     private void ShowAdvanced()
     {
         var panel = new StackPanel();
         var tools = new WrapPanel();
-        var play = ToolButton("Google Play"); play.Click += async (_, _) => { secondary?.Close(); await RunWorkspaceActionAsync(async () => { await runtime.ShowOthersAsync(lifetime.Token); await runtime.LaunchAppAsync("com.android.vending", lifetime.Token); }); }; tools.Children.Add(play);
-        var install = ToolButton("Install APK…"); install.Click += async (_, _) => { secondary?.Close(); await InstallApksAsync(); }; tools.Children.Add(install);
+        var play = ToolButton("Google Play"); play.Click += async (_, _) => { secondary?.Close(); await RunWorkspaceActionAsync(async () => { await OpenPaneAsync(WorkspacePane.Other); await runtime.LaunchAppAsync("com.android.vending", lifetime.Token); }); }; tools.Children.Add(play);
+        var install = ToolButton("Install APKâ€¦"); install.Click += async (_, _) => { secondary?.Close(); await InstallApksAsync(); }; tools.Children.Add(install);
         if (stop.Parent is Panel old) old.Children.Remove(stop);
         tools.Children.Add(stop); panel.Children.Add(tools);
         panel.Children.Add(new TextBlock { Text = "Use Install APK to select a single APK or every file in a matching split APK set. Android uses a fixed landscape tablet display. App data stays in private-data. Location settings on the dashboard apply to all Android apps.", TextWrapping = TextWrapping.Wrap, Foreground = Brush("#B8C5D6"), Margin = new(0, 24, 0, 0) });

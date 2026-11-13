@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace AsiairContainer;
 
 public sealed record AndroidApp(string Package, string Label);
-public sealed record AndroidTask(int Id, int Stack, string Package, string Component, string Mode, bool Visible);
+public sealed record AndroidTask(int Id, int Stack, string Package, string Component, string Mode, bool Visible, int Display = 0);
 public sealed partial class RuntimeController
 {
     public const string AsiairPackage = "com.zwoasi.asiair", StellavitaPackage = "com.touptek.astrostation";
@@ -22,14 +22,14 @@ public sealed partial class RuntimeController
     }
     public static IReadOnlyList<AndroidTask> ParseTasks(string listing)
     {
-        var tasks = new List<AndroidTask>(); int stack = -1; string mode = "";
+        var tasks = new List<AndroidTask>(); int stack = -1, display = 0; string mode = "";
         foreach (string line in listing.Split('\n'))
         {
             var header = Regex.Match(line, @"^Stack id=(\d+)");
-            if (header.Success) { stack = int.Parse(header.Groups[1].Value); mode = ""; }
+            if (header.Success) { stack = int.Parse(header.Groups[1].Value); mode = ""; var d = Regex.Match(line, @"displayId=(\d+)"); display = d.Success ? int.Parse(d.Groups[1].Value) : 0; }
             var config = Regex.Match(line, @"mWindowingMode=([\w-]+)"); if (config.Success) mode = config.Groups[1].Value;
             var task = Regex.Match(line, @"^\s+taskId=(\d+):\s+([\w.]+)/[^\s]+.*?visible=(true|false).*?topActivity=ComponentInfo\{([^}]+)\}");
-            if (task.Success && stack >= 0) tasks.Add(new(int.Parse(task.Groups[1].Value), stack, task.Groups[2].Value, task.Groups[4].Value, mode, task.Groups[3].Value == "true"));
+            if (task.Success && stack >= 0) tasks.Add(new(int.Parse(task.Groups[1].Value), stack, task.Groups[2].Value, task.Groups[4].Value, mode, task.Groups[3].Value == "true", display));
         }
         return tasks;
     }

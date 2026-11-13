@@ -31,17 +31,18 @@ public sealed partial class MainWindow
     {
         androidFontPercent.Text = settings.AndroidFontScale.ToString("0%", CultureInfo.InvariantCulture);
         smallerAndroidFont.IsEnabled = !busy && !closing && settings.AndroidFontScale > 0.8;
-        largerAndroidFont.IsEnabled = !busy && !closing && settings.AndroidFontScale < 2.0;
+        largerAndroidFont.IsEnabled = !busy && !closing && settings.AndroidFontScale < 1.3;
         resetAndroidFont.IsEnabled = !busy && !closing && Math.Abs(settings.AndroidFontScale - 1.0) > 0.001;
     }
     private async Task ChangeAndroidFontAsync(double scale)
     {
         if (busy || commandActive || closing) return;
-        scale = Math.Clamp(scale, 0.8, 2.0);
+        scale = Math.Clamp(scale, 0.8, 1.3);
         async Task Apply()
         {
             var changed = CurrentOptions() with { AndroidFontScale = scale };
             if (runtime.IsRunning) await runtime.SetAndroidFontScaleAsync(scale, lifetime.Token);
+            if (cloneRuntime is { IsRunning: true }) await cloneRuntime.SetAndroidFontScaleAsync(scale,lifetime.Token);
             changed.Save(root); settings = changed;
         }
         if (runtime.IsRunning) await RunWorkspaceActionAsync(Apply, false);

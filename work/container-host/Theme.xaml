@@ -2,7 +2,7 @@
  <SolidColorBrush x:Key="Text" Color="#EEF3FA"/><SolidColorBrush x:Key="Muted" Color="#B8C5D6"/>
  <SolidColorBrush x:Key="Button" Color="#26354A"/><SolidColorBrush x:Key="Hover" Color="#354A65"/><SolidColorBrush x:Key="Pressed" Color="#182434"/>
  <SolidColorBrush x:Key="Disabled" Color="#18212E"/><SolidColorBrush x:Key="Edge" Color="#8298B3"/>
- <SolidColorBrush x:Key="Field" Color="#202C3D"/><SolidColorBrush x:Key="Accent" Color="#FF965B"/>
+ <SolidColorBrush x:Key="Field" Color="#202C3D"/><SolidColorBrush x:Key="Accent" Color="#79B8FF"/>
  <Style TargetType="Button">
   <Setter Property="Foreground" Value="{StaticResource Text}"/><Setter Property="Background" Value="{StaticResource Button}"/>
   <Setter Property="BorderBrush" Value="{StaticResource Edge}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>

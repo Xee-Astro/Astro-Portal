@@ -8,7 +8,7 @@ namespace AsiairContainer;
 public sealed partial class MainWindow
 {
     private readonly Button stellaStart = ToolButton("Stellavita");
-    private readonly Button others = ToolButton("Others");
+    private readonly Button others = ToolButton("Other");
     private readonly Button splitScreen = ToolButton("Split screen");
     private readonly CheckBox autoStartAndroid = new() { Content = "Start Android automatically", VerticalAlignment = VerticalAlignment.Center, Margin = new(8, 0, 12, 0) };
     private readonly TextBox phoneIp = new() { Width = 145, Height = 30, Margin = new(0, 0, 8, 0) };
@@ -20,7 +20,7 @@ public sealed partial class MainWindow
     {
         if (feedingLocation || busy || closing || verificationMode || !runtime.IsRunning || settings.Latitude is not double lat || settings.Longitude is not double lon) return;
         feedingLocation = true;
-        try { await runtime.FeedLocationAsync(lat, lon, lifetime.Token); }
+        try { await runtime.FeedLocationAsync(lat, lon, lifetime.Token); if (cloneRuntime is { IsRunning: true }) await cloneRuntime.FeedLocationAsync(lat,lon,lifetime.Token); }
         catch (OperationCanceledException) { }
         catch (Exception error) { if (runtime.IsRunning && !closing) Trace("GPS forwarding will retry: " + error.Message); }
         finally { feedingLocation = false; }
@@ -29,9 +29,17 @@ public sealed partial class MainWindow
     {
         if (refreshingWorkspace || busy || closing) return;
         refreshingWorkspace = true;
-        try { hasAstroApp = runtime.IsRunning && await runtime.HasRunningAstroAppAsync(lifetime.Token); if (runtime.IsRunning) { await runtime.RefreshSplitScreenStateAsync(lifetime.Token); await RefreshAppStateAsync(); if (await runtime.NeedsAsiairCaptionRepairAsync(lifetime.Token)) await RunWorkspaceActionAsync(() => runtime.RepairAsiairCaptionAsync(lifetime.Token), false); } }
+        try
+        {
+            hasAstroApp = paneSurfaces.Keys.Any(id => id != WorkspacePane.Other && PaneRunning(id));
+            if (runtime.IsRunning)
+            {
+                await RefreshAppStateAsync();
+                if (await runtime.NeedsAppDisplayNormalizationAsync(lifetime.Token) || cloneRuntime is { IsRunning: true } && await cloneRuntime.NeedsAppDisplayNormalizationAsync(lifetime.Token)) await RunWorkspaceActionAsync(async () => { await runtime.NormalizeAppDisplaysAsync(lifetime.Token); if (cloneRuntime is { IsRunning: true }) await cloneRuntime.NormalizeAppDisplaysAsync(lifetime.Token); }, false);
+            }
+        }
         catch { hasAstroApp = false; }
-        finally { refreshingWorkspace = false; splitScreen.IsEnabled = !busy && !closing && runtime.IsRunning && hasAstroApp && asiairInstalled && stellaInstalled; UpdatePresentationButtons(); }
+        finally { refreshingWorkspace = false; UpdatePresentationButtons(); UpdateMultiWorkspaceControls(); }
     }
     private async Task RunWorkspaceActionAsync(Func<Task> action, bool presentFullScreen = true)
     {
@@ -66,23 +74,7 @@ public sealed partial class MainWindow
         nint window = await runtime.RestartDisplayAsync(lifetime.Token);
         view.Attach(window); view.SetInputEnabled(false);
     }
-    private async Task OpenOthersDrawerAsync()
-    {
-        await runtime.ShowOthersAsync(lifetime.Token);
-        var apps = await runtime.ListOtherAppsAsync(lifetime.Token);
-        var panel = new StackPanel();
-        panel.Children.Add(new TextBlock { Text = "Other apps", FontSize = 25, Margin = new(0, 0, 0, 8) });
-        panel.Children.Add(new TextBlock { Text = "ASIAIR and Stellavita stay in the background. Select an app to open it full screen.", Foreground = Brush("#A4B6CD"), Margin = new(0, 0, 0, 16) });
-        var choices = new WrapPanel();
-        foreach (var app in apps)
-        {
-            var button = ToolButton(app.Label); button.MinWidth = 170; button.Margin = new(0, 0, 12, 12);
-            button.Click += async (_, _) => await RunWorkspaceActionAsync(() => runtime.LaunchAppAsync(app.Package, lifetime.Token)); choices.Children.Add(button);
-        }
-        if (apps.Count == 0) panel.Children.Add(new TextBlock { Text = "No other launchable apps are installed. Install apps using Google Play." });
-        panel.Children.Add(choices); appDrawer.Child = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-        view.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Collapsed; appDrawer.Visibility = Visibility.Visible;
-    }
+    private Task OpenOthersDrawerAsync() => OpenPaneAsync(WorkspacePane.Other);
     private async Task ReadPhoneLocationAsync()
     {
         if (gettingLocation || closing) return;
@@ -94,7 +86,7 @@ public sealed partial class MainWindow
             settings = CurrentOptions(); settings.Save(root);
             locationStatus.Text = "Getting GPS from phone…";
             var fix = await PhoneLocation.GetAsync(settings.PhoneGpsIp, settings.PhoneGpsPort, token); token.ThrowIfCancellationRequested();
-            if (runtime.IsRunning) await runtime.SetLocationAsync(fix.Latitude, fix.Longitude, token);
+            if (runtime.IsRunning) await BroadcastLocationAsync(fix.Latitude, fix.Longitude, token);
             windowsLocation.IsChecked = false;
             latitude.Text = fix.Latitude.ToString("0.######", CultureInfo.InvariantCulture); longitude.Text = fix.Longitude.ToString("0.######", CultureInfo.InvariantCulture);
             settings = CurrentOptions() with { Latitude = fix.Latitude, Longitude = fix.Longitude, LocationSource = "Phone GPS", UsePhoneLocation = true, UseWindowsLocation = false }; settings.Save(root);

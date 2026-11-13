@@ -41,11 +41,23 @@ public sealed partial class MainWindow
             if (settings.AndroidFontScale != 1.1 || smallerAndroidFont.IsEnabled || largerAndroidFont.IsEnabled) throw new IOException("Font changes were accepted while busy.");
             SetBusy(false); await ChangeAndroidFontAsync(0.8);
             if (smallerAndroidFont.IsEnabled) throw new IOException("Font minimum was not enforced.");
-            await ChangeAndroidFontAsync(2.0);
+            await ChangeAndroidFontAsync(1.3);
             if (largerAndroidFont.IsEnabled) throw new IOException("Font maximum was not enforced.");
             await ChangeAndroidFontAsync(1.0);
             if (resetAndroidFont.IsEnabled) throw new IOException("Font reset state was not cleared.");
+            cloneAsiair.IsChecked = cloneStellavita.IsChecked = true; SaveToolOptions(); UpdateMultiWorkspaceControls();
+            if (asiair2Tile?.Visibility != Visibility.Visible || stellavita2Tile?.Visibility != Visibility.Visible || asiair2Start.IsEnabled || stellavita2Start.IsEnabled) throw new IOException("Clone launch controls did not respect installation state.");
+            if (!ContainerOptions.Load(root).CloneAsiair || !ContainerOptions.Load(root).CloneStellavita) throw new IOException("Clone checkbox preferences were not saved.");
             Capture(this, "Astro-Portal-dashboard");
+            await Task.Delay(350); Capture(this,"Astro-Portal-portals-rotated");
+            if (SystemParameters.ClientAreaAnimation && File.ReadAllBytes(Path.Combine(root,"Astro-Portal-dashboard.png")).SequenceEqual(File.ReadAllBytes(Path.Combine(root,"Astro-Portal-portals-rotated.png")))) throw new IOException("The stopped-screen portals are not animating.");
+            if (placeholder.Visibility != Visibility.Visible) throw new IOException("Stopped Android splash is missing.");
+            SetLoading(true); loadingSplash.Progress = .52; Capture(this,"Astro-Portal-boot-consuming");
+            await loadingSplash.CompleteBootAsync();
+            if (loadingSplash.Progress != 1) throw new IOException("The splash did not fully consume ASTRO on completion.");
+            Capture(this,"Astro-Portal-boot-complete"); SetLoading(false);
+            if (loadingOverlay.Visibility != Visibility.Collapsed || loadingSplash.Progress != 0) throw new IOException("Splash did not reset after boot/cancellation.");
+
             async Task Inspect(Action show, string name)
             {
                 Exception? failure = null;
@@ -54,7 +66,7 @@ public sealed partial class MainWindow
                 timer.Start(); show(); if (failure is not null) throw failure; await Task.Delay(50);
             }
             await Inspect(ShowNotes, "Astro-Portal-notes"); await Inspect(ShowAdvanced, "Astro-Portal-advanced");
-            File.WriteAllText(result, "{\"passed\":true,\"freshInstallLabels\":true,\"unavailableControlsDisabled\":true,\"notesWindow\":true,\"advancedWindow\":true,\"textFieldHeight\":true}");
+            File.WriteAllText(result, "{\"passed\":true,\"freshInstallLabels\":true,\"unavailableControlsDisabled\":true,\"notesWindow\":true,\"advancedWindow\":true,\"textFieldHeight\":true,\"stoppedSplash\":true,\"bootConsumption\":true,\"splashReset\":true}");
         }
         catch (Exception error) { Environment.ExitCode = 1; File.WriteAllText(result, JsonSerializer.Serialize(new { passed = false, error = error.ToString() })); }
         finally { Close(); }

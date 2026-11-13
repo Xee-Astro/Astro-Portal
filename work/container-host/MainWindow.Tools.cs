@@ -34,10 +34,10 @@ public sealed partial class MainWindow
         foreach (var field in new[] { latitude, longitude }) { field.Height = 36; field.Padding = new(8, 2, 8, 2); }
         locationStatus.Text = settings.Latitude.HasValue ? "Saved location: " + settings.LocationSource : "Location not set. Use PC location or enter latitude and longitude.";
         var apps = new WrapPanel { Margin = new(0, 0, 0, 12) };
-        start.Margin = new(0, 0, 8, 0); apps.Children.Add(AppTile(start, false)); apps.Children.Add(AppTile(stellaStart, true)); apps.Children.Add(others); apps.Children.Add(splitScreen); apps.Children.Add(fullScreenButton); apps.Children.Add(autoStartAndroid); var notes = ToolButton("Notes"); notes.Click += (_, _) => ShowNotes(); apps.Children.Add(notes); var advanced = ToolButton("Advanced"); advanced.Click += (_, _) => ShowAdvanced(); apps.Children.Add(advanced);
+        start.Margin = new(0, 0, 8, 0); apps.Children.Add(DashboardAppTile(start, false)); apps.Children.Add(DashboardAppTile(stellaStart, true)); AddCloneLaunchControls(apps); apps.Children.Add(others); apps.Children.Add(splitScreen); apps.Children.Add(fullScreenButton); apps.Children.Add(autoStartAndroid); var notes = ToolButton("Notes"); notes.Click += (_, _) => ShowNotes(); apps.Children.Add(notes); var advanced = ToolButton("Advanced"); advanced.Click += (_, _) => ShowAdvanced(); apps.Children.Add(advanced);
         stellaStart.Click += async (_, _) => await OpenOrInstallAsync(true);
         others.Click += async (_, _) => await RunWorkspaceActionAsync(OpenOthersDrawerAsync);
-        splitScreen.Click += async (_, _) => await RunWorkspaceActionAsync(() => runtime.ShowSplitScreenAsync(lifetime.Token), false);
+        splitScreen.Click += async (_, _) => await RunWorkspaceActionAsync(ShowWorkspaceSplitAsync, false);
         fullScreenButton.Click += async (_, _) => await ChangePresentationAsync(true);
         autoStartAndroid.Click += (_, _) => SaveToolOptions();
         AddAppButton(apps, "Back", () => runtime.NavigateAsync(false, lifetime.Token));
@@ -86,7 +86,7 @@ public sealed partial class MainWindow
         if (dialog.ShowDialog(this) != true) return;
         await RunWorkspaceActionAsync(async () => { status.Text = "Installing the selected app…"; await runtime.ShowOthersAsync(lifetime.Token); await runtime.InstallApksAsync(dialog.FileNames, lifetime.Token); RenderUpdateStatus(); }, false);
     }
-    private ContainerOptions CurrentOptions() => settings with { AutomaticUpdateChecks = automaticUpdates.IsChecked == true, UseWindowsLocation = windowsLocation.IsChecked == true, AutoStartAndroid = autoStartAndroid.IsChecked == true, PhoneGpsIp = phoneIp.Text.Trim(), PhoneGpsPort = int.TryParse(phonePort.Text, out int parsedPort) ? parsedPort : 0 };
+    private ContainerOptions CurrentOptions() => settings with { AutomaticUpdateChecks = automaticUpdates.IsChecked == true, UseWindowsLocation = windowsLocation.IsChecked == true, AutoStartAndroid = autoStartAndroid.IsChecked == true, CloneAsiair = cloneAsiair.IsChecked == true, CloneStellavita = cloneStellavita.IsChecked == true, PhoneGpsIp = phoneIp.Text.Trim(), PhoneGpsPort = int.TryParse(phonePort.Text, out int parsedPort) ? parsedPort : 0 };
     private void SaveToolOptions()
     {
         try { var changed = CurrentOptions(); changed.Save(root); settings = changed; } catch (Exception error) { status.Text = error.Message; }
@@ -110,7 +110,7 @@ public sealed partial class MainWindow
             if (!latitude.IsKeyboardFocusWithin && !longitude.IsKeyboardFocusWithin) { latitude.Text = fix.Latitude.ToString("0.######", CultureInfo.InvariantCulture); longitude.Text = fix.Longitude.ToString("0.######", CultureInfo.InvariantCulture); }
             windowsLocation.IsChecked = true;
             settings = CurrentOptions() with { Latitude = fix.Latitude, Longitude = fix.Longitude, LocationSource = "Windows", UsePhoneLocation = false }; settings.Save(root);
-            if (runtime.IsRunning) await runtime.SetLocationAsync(fix.Latitude, fix.Longitude, token);
+            if (runtime.IsRunning) await BroadcastLocationAsync(fix.Latitude, fix.Longitude, token);
             locationStatus.Text = $"Windows location {(runtime.IsRunning ? "sent to Android" : "saved")}; estimated accuracy {fix.AccuracyMetres:0} m.";
         }
         catch (OperationCanceledException) { }
@@ -124,7 +124,7 @@ public sealed partial class MainWindow
             if (!double.TryParse(latitude.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double lat) || !double.TryParse(longitude.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out double lon)) throw new ArgumentException("Enter latitude and longitude using decimal degrees, for example 30.0444 and 31.2357.");
             var changed = CurrentOptions() with { Latitude = lat, Longitude = lon, LocationSource = "Manual", UseWindowsLocation = false, UsePhoneLocation = false }; changed.Validate();
             locationRequest?.Cancel();
-            if (runtime.IsRunning) await runtime.SetLocationAsync(lat, lon, lifetime.Token);
+            if (runtime.IsRunning) await BroadcastLocationAsync(lat, lon, lifetime.Token);
             windowsLocation.IsChecked = false; settings = changed; settings.Save(root);
             locationStatus.Text = runtime.IsRunning ? "Manual location sent to Android. Windows location is off until you enable it again." : "Manual location saved. It will be sent when Android starts.";
         }

@@ -1,36 +1,29 @@
-> Before any SDK download or binary distribution, review [the licensing review](docs/LICENSING_REVIEW.md). This source snapshot is not a vendor-approved end-user distribution.
+# Build Astro - Portal 0.6.0
 
-# Build Astro - Portal 0.5
+Review [third-party obligations](docs/LICENSING_REVIEW.md) before SDK downloads or distribution. Windows x64, .NET 10 SDK (self-contained runtime 10.0.8), Java JDK, Python 3 and Windows Hypervisor Platform are required.
 
-Windows x64, .NET 10 SDK, Java JDK (tested with 25), Python 3 and Windows Hypervisor Platform are required. Runtime dependencies and notices are pinned in `work/android-container/dependencies.json`.
-
-1. Run `python work/download_container_runtime.py` to download and verify the official Android emulator, Android 11 Google Play image, platform tools and scrcpy into `outputs/ASIAIR-Container/runtime`.
-2. Run `python work/fetch_android_build.py`, then `python work/build_container_home.py` to build the shell-classpath layout helper. It is pushed to Android as a classpath APK, not installed as an Android application.
-3. Build the self-contained portable launcher:
-   `dotnet publish work/container-host/AsiairContainer.csproj -c Release -r win-x64 --self-contained true -o outputs/ASIAIR-Container`
-4. Build the self-contained clean-installer payload:
-   `dotnet publish work/container-host/AsiairContainer.csproj -c Release -r win-x64 --self-contained true -o work/portal-selfcontained`
-5. Run `python work/build_portal_installer.py` to create `outputs/Astro-Portal-Setup.zip`. It includes only the self-contained launcher, helper, dependency manifest and installer scripts. Android dependencies and official app APKs are downloaded on the target PC. No private-data, accounts, passwords, signing keys or original APK set is packaged.
-6. Run `dotnet run --project work/container-checks -c Release` for offline checks. Windows DPAPI checks need the actual Windows user profile. Official APK identity checks run additionally when the two downloaded vendor APKs exist in `work/android-container/downloads/`.
-
-UI checks: `AsiairContainer.exe --verify-ui --root <empty-test-root>` and `--verify-contrast` render the dashboard, Notes, Advanced and theme states. Set `AutomaticUpdateChecks` and `AutoStartAndroid` false in that test root's container.json.
-
-Runtime checks: `--verify-portal --install-asiair <official-ASIAIR.apk> --install-stellavita <official-Stellavita.apk>` performs native installation, tablet rotation/display checks, discarded overlapping commands, split/full-screen switching, PID preservation, running indicators, specific-app termination and Windows keyboard input. Use a separate fresh test root with the runtime folder, not a real observing session. `work/verify_portal_fresh.py` creates that isolated root using hard links to immutable runtime dependencies and copies the launcher. No app data is copied.
-
-Architecture: WPF desktop shell + owned native scrcpy surface + isolated Android emulator. App mode changes use a shell-only Java helper. A non-waiting layout lock rejects concurrent transitions. A named per-installation session prevents duplicate launchers; repeat launches activate the existing window. Single apps use 2560×1600 (16:10); split screen uses 2560×800. Display height changes inside the non-queued layout transition while rotation remains locked. Native x86-64 vendor APKs replace ARM-only packages with Android's data-preserving update mechanism. APK downloads use official endpoints, a constrained HTTPS redirect list and pinned vendor signing certificates; Android verifies the full signatures during installation.
-
-Notes persist with atomic JSON replacement; passwords use Windows DPAPI CurrentUser. Never log note contents or package private-data with the installer. Physical camera/mount/firmware actions remain outside automated checks.
-
-
-## Build the 0.5.1 patch
-
-Publish the self-contained launcher to `work/portal-051`, then run `python work/build_portal_patch.py`:
+1. Run `python work/download_container_runtime.py` to obtain verified runtime components, subject to upstream terms.
+2. Run `python work/fetch_android_build.py`, then `python work/build_container_home.py` to build the original layout helper.
+3. Publish and package:
 
 ```powershell
-dotnet publish work/container-host/AsiairContainer.csproj -c Release -r win-x64 --self-contained true -o work/portal-051
-python work/build_portal_patch.py
+dotnet publish work/container-host/AsiairContainer.csproj -c Release -r win-x64 --self-contained true -o work/portal-060
+python work/build_portal_060.py
 ```
 
-The patch ZIP contains only five launcher files, original updater scripts, a SHA-256 manifest and documentation. It requires the existing self-contained 0.5.0 runtime. The updater rejects incompatible/newer versions, checks running processes and file locks, backs up originals, and attempts rollback after copy/verification failures. It never replaces `private-data` or `container.json`.
+The builder produces the full setup and five-file patch in `outputs`, with SHA-256 sidecars. It requires .NET and WPF LICENSE/THIRD-PARTY-NOTICES from the runtime NuGet packages (or existing locally prepared license files). The WPF notice is available from the official dotnet/wpf v10.0.8 source. The full setup contains the launcher runtime, original helper and scripts; Android and vendor APKs are separate downloads. No user profiles, accounts or vendor signing keys belong in releases.
 
-`--verify-font --root <isolated-runtime-root>` tests live font increase/decrease/reset and saved preferences. Use separate private ports if another installation is running. `--verify-ui` also exercises offline font controls, busy-state rejection and limits. Seven additional offline font-option checks were added for 0.5.1. The development run passed 70 checks with locally obtained vendor APKs; four APK checks are skipped if those files are absent.
+The patch supports self-contained 0.5.0 and 0.5.1 installations. It checks manifest hashes, running processes and file locks; backs up originals and attempts rollback after failure. It does not replace configuration or private-data. Apply into the existing installation, not an empty folder.
+
+## Verification
+
+- `dotnet run --project work/container-checks -c Release`: options, updates, downloads, encrypted notes, phone GPS, clone state and pane layout. DPAPI requires the Windows user profile. Vendor APK identity tests additionally use locally obtained official APKs; APKs are never published.
+- `AsiairContainer.exe --verify-ui --root <isolated-empty-root>`: dashboard, clone controls, Notes, Advanced and font boundaries. Set AutoStartAndroid, AutomaticUpdateChecks and UseWindowsLocation false.
+- `--verify-contrast`: existing theme contrast checks.
+- `--verify-displays --root <isolated-runtime-root>`: independent app displays.
+- `--verify-multi --root <isolated-runtime-root>`: four instances, isolated persistent profile markers, two/three/four/five selected panes, hidden-session preservation, pane zoom/restore, rejected overlapping actions, font 130% in both profiles, simulated shared GPS and per-instance termination.
+
+Runtime checks require a separate runtime-backed root with both official apps installed and dedicated console/ADB ports. Do not use an observing session. Clone first boot needs substantial RAM/disk space. Hardware camera/mount/firmware operations are outside these checks.
+
+The older `--verify-portal` diagnostic exercises the legacy Android split-task layout, which the new pane workspace replaces; use `--verify-multi` for 0.6.0 acceptance.
+

@@ -43,11 +43,26 @@ public static class PortalChecks
         assert(ContainerOptions.Load(root).AndroidFontScale == 1.3, "Android font size persists locally");
         File.WriteAllText(Path.Combine(root,"container.json"),"{}");
         assert(ContainerOptions.Load(root).AndroidFontScale == 1.0, "legacy settings retain the default Android font size");
-        foreach (double invalidScale in new[] { 0.7, 2.1, double.NaN, double.PositiveInfinity })
+        foreach (double invalidScale in new[] { 0.7, 1.4, 2.1, double.NaN, double.PositiveInfinity })
         {
             bool rejected = false; try { ContainerOptions.ValidateFontScale(invalidScale); } catch (ArgumentException) { rejected = true; }
             assert(rejected,"invalid Android font size rejected: " + invalidScale);
         }
+        File.WriteAllText(Path.Combine(root,"container.json"),"{\"AndroidFontScale\":1.4}");
+        assert(ContainerOptions.Load(root).AndroidFontScale == 1.3, "unsupported saved font size migrates to 130 percent");
+        var clones = new ContainerOptions { CloneAsiair = true, CloneStellavita = true }; clones.Save(root);
+        assert(ContainerOptions.Load(root).CloneAsiair && ContainerOptions.Load(root).CloneStellavita, "clone launch preferences persist");
+        foreach (int count in Enumerable.Range(1,5))
+        {
+            var panes = Enum.GetValues<WorkspacePane>().Take(count).ToArray(); var placement = WorkspacePanes.Arrange(panes);
+            var cells = new HashSet<(int Row,int Column)>(); bool overlap = false;
+            foreach (var tile in placement) for (int col=tile.Column;col<tile.Column+tile.ColumnSpan;col++) if (!cells.Add((tile.Row,col))) overlap = true;
+            assert(placement.Count == count && !overlap,"workspace lays out " + count + " distinct panes without overlap");
+        }
+        assert(WorkspacePanes.Arrange(new[] { WorkspacePane.Asiair, WorkspacePane.Asiair }).Count == 1,"duplicate pane selections collapse safely");
+        assert(WorkspacePanes.IsClone(WorkspacePane.Asiair2) && WorkspacePanes.IsClone(WorkspacePane.Stellavita2) && !WorkspacePanes.IsClone(WorkspacePane.Other),"clone identities are separate from the main Android home");
+        var isolated = new RuntimeController(root,new ContainerOptions(),true);
+        assert(isolated.StateDirectory != Path.Combine(root,"private-data") && isolated.StateDirectory.EndsWith(Path.Combine("profiles","second")),"second profile cannot overwrite original Android data");
         var runtime = new RuntimeController(root,new ContainerOptions()); runtime.ConfigureAvd();
         string config = File.ReadAllText(Path.Combine(root,"private-data","avd","Astro_Play.avd","config.ini"));
         assert(config.Contains("hw.lcd.width=2560") && config.Contains("hw.lcd.height=800") && config.Contains("hw.accelerometer=no") && config.Contains("hw.initialOrientation=landscape"), "tablet uses one landscape framebuffer without rotation sensor");
