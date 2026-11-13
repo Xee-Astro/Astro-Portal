@@ -20,3 +20,17 @@ Runtime checks: `--verify-portal --install-asiair <official-ASIAIR.apk> --instal
 Architecture: WPF desktop shell + owned native scrcpy surface + isolated Android emulator. App mode changes use a shell-only Java helper. A non-waiting layout lock rejects concurrent transitions. A named per-installation session prevents duplicate launchers; repeat launches activate the existing window. Single apps use 2560×1600 (16:10); split screen uses 2560×800. Display height changes inside the non-queued layout transition while rotation remains locked. Native x86-64 vendor APKs replace ARM-only packages with Android's data-preserving update mechanism. APK downloads use official endpoints, a constrained HTTPS redirect list and pinned vendor signing certificates; Android verifies the full signatures during installation.
 
 Notes persist with atomic JSON replacement; passwords use Windows DPAPI CurrentUser. Never log note contents or package private-data with the installer. Physical camera/mount/firmware actions remain outside automated checks.
+
+
+## Build the 0.5.1 patch
+
+Publish the self-contained launcher to `work/portal-051`, then run `python work/build_portal_patch.py`:
+
+```powershell
+dotnet publish work/container-host/AsiairContainer.csproj -c Release -r win-x64 --self-contained true -o work/portal-051
+python work/build_portal_patch.py
+```
+
+The patch ZIP contains only five launcher files, original updater scripts, a SHA-256 manifest and documentation. It requires the existing self-contained 0.5.0 runtime. The updater rejects incompatible/newer versions, checks running processes and file locks, backs up originals, and attempts rollback after copy/verification failures. It never replaces `private-data` or `container.json`.
+
+`--verify-font --root <isolated-runtime-root>` tests live font increase/decrease/reset and saved preferences. Use separate private ports if another installation is running. `--verify-ui` also exercises offline font controls, busy-state rejection and limits. Seven additional offline font-option checks were added for 0.5.1. The development run passed 70 checks with locally obtained vendor APKs; four APK checks are skipped if those files are absent.

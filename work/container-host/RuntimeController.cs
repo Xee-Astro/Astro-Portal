@@ -187,6 +187,7 @@ public sealed partial class RuntimeController : IAsyncDisposable
             ("system","accelerometer_rotation","0"),("system","user_rotation","0"),
             ("global","force_resizable_activities","1"),("global","enable_freeform_support","1"),("global","policy_control","immersive.full=com.zwoasi.asiair,com.touptek.astrostation")
         }) await ShellAsync(token, "settings", "put", item.Area, item.Key, item.Value);
+        await ApplyAndroidFontScaleCoreAsync(options.AndroidFontScale, token);
         await ShellAsync(token, "wm", "set-user-rotation", "lock", "0");
         await ShellAsync(token, "wm", "set-fix-to-user-rotation", "enabled");
     }

@@ -34,6 +34,17 @@ public sealed partial class MainWindow
                 var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
                 var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap)); using var stream = File.Create(Path.Combine(root, name + ".png")); png.Save(stream);
             }
+            if (androidFontPercent.Text != "100%") throw new IOException("Default Android font label is incorrect.");
+            await ChangeAndroidFontAsync(1.1);
+            if (androidFontPercent.Text != "110%" || ContainerOptions.Load(root).AndroidFontScale != 1.1) throw new IOException("Font control did not persist.");
+            SetBusy(true); await ChangeAndroidFontAsync(1.2);
+            if (settings.AndroidFontScale != 1.1 || smallerAndroidFont.IsEnabled || largerAndroidFont.IsEnabled) throw new IOException("Font changes were accepted while busy.");
+            SetBusy(false); await ChangeAndroidFontAsync(0.8);
+            if (smallerAndroidFont.IsEnabled) throw new IOException("Font minimum was not enforced.");
+            await ChangeAndroidFontAsync(2.0);
+            if (largerAndroidFont.IsEnabled) throw new IOException("Font maximum was not enforced.");
+            await ChangeAndroidFontAsync(1.0);
+            if (resetAndroidFont.IsEnabled) throw new IOException("Font reset state was not cleared.");
             Capture(this, "Astro-Portal-dashboard");
             async Task Inspect(Action show, string name)
             {
@@ -100,7 +111,7 @@ public sealed partial class MainWindow
             var bitmap = new RenderTargetBitmap((int)ActualWidth, (int)ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(this);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap)); using (var file = File.Create(Path.Combine(root, "Astro-Portal.png"))) png.Save(file);
             await runtime.RestoreConfiguredLocationAsync(lifetime.Token);
-            File.WriteAllText(result, JsonSerializer.Serialize(new { passed = true, build = "0.5.0", branding = true, nativeX64Install = true, landscapeTablet = true, adaptiveLandscapeResolution = true, singleResolution = "2560x1600", splitResolution = "2560x800", noCommandQueuing = true, runningIndicator = true, perAppTermination = true, splitScreen = true, preservedAppProcesses = true, fullScreen = true, keyboard = true, time = DateTimeOffset.UtcNow }));
+            File.WriteAllText(result, JsonSerializer.Serialize(new { passed = true, build = "0.5.1", branding = true, nativeX64Install = true, landscapeTablet = true, adaptiveLandscapeResolution = true, singleResolution = "2560x1600", splitResolution = "2560x800", noCommandQueuing = true, runningIndicator = true, perAppTermination = true, splitScreen = true, preservedAppProcesses = true, fullScreen = true, keyboard = true, time = DateTimeOffset.UtcNow }));
         }
         catch (Exception error) { Environment.ExitCode = 1; Directory.CreateDirectory(Path.GetDirectoryName(result)!); File.WriteAllText(result, JsonSerializer.Serialize(new { passed = false, error = error.ToString() })); }
         finally { Close(); }

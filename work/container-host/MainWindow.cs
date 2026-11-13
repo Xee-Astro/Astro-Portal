@@ -27,7 +27,7 @@ public sealed partial class MainWindow : Window
 
     public MainWindow(string root)
     {
-        verificationMode = (Environment.GetCommandLineArgs().Contains("--verify-window") || Environment.GetCommandLineArgs().Contains("--verify-keyboard") || Environment.GetCommandLineArgs().Contains("--verify-portal") || Environment.GetCommandLineArgs().Contains("--verify-ui") || Environment.GetCommandLineArgs().Contains("--verify-toolbar"));
+        verificationMode = (Environment.GetCommandLineArgs().Contains("--verify-window") || Environment.GetCommandLineArgs().Contains("--verify-keyboard") || Environment.GetCommandLineArgs().Contains("--verify-portal") || Environment.GetCommandLineArgs().Contains("--verify-ui") || Environment.GetCommandLineArgs().Contains("--verify-toolbar") || Environment.GetCommandLineArgs().Contains("--verify-font"));
         view.SuppressActivation = verificationMode; ShowActivated = !verificationMode;
         this.root = root; settings = ContainerOptions.Load(root); runtime = new(root, settings);
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/AsiairContainer;component/Theme.xaml", UriKind.Relative) });
@@ -148,7 +148,7 @@ public sealed partial class MainWindow : Window
         others.IsEnabled = !busy; stop.IsEnabled = !busy && runtime.IsRunning;
         splitScreen.IsEnabled = !busy && runtime.IsRunning && hasAstroApp && asiairInstalled && stellaInstalled;
         if (view.IsAttached) view.SetInputEnabled(!busy);
-        UpdateAppButtons(); UpdatePresentationButtons();
+        UpdateAppButtons(); UpdatePresentationButtons(); UpdateAndroidFontButtons();
     }
     private async void OnClosing(object? sender, CancelEventArgs args)
     {

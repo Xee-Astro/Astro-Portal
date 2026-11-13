@@ -38,6 +38,16 @@ public static class PortalChecks
         assert(!stored.Contains("Test-Password-123!") && !stored.Contains("Another secret"), "saved passwords are encrypted with Windows DPAPI");
         assert(RuntimeController.IsAsiairControlScreen(new(1,1,RuntimeController.AsiairPackage,"com.zwoasi.asiair/com.zwoasi.asiair.activity.AirActivity","freeform",true)), "ASIAIR control screen uses caption-free fullscreen");
         assert(!RuntimeController.IsAsiairControlScreen(new(1,1,RuntimeController.AsiairPackage,"com.zwoasi.asiair/com.zwoasi.asiair.activity_pre.AirPartActivity","freeform",true)), "ASIAIR connection screen retains landscape compatibility");
+        assert(new ContainerOptions().AndroidFontScale == 1.0, "Android font defaults to 100 percent");
+        var enlarged = new ContainerOptions { AndroidFontScale = 1.3 }; enlarged.Save(root);
+        assert(ContainerOptions.Load(root).AndroidFontScale == 1.3, "Android font size persists locally");
+        File.WriteAllText(Path.Combine(root,"container.json"),"{}");
+        assert(ContainerOptions.Load(root).AndroidFontScale == 1.0, "legacy settings retain the default Android font size");
+        foreach (double invalidScale in new[] { 0.7, 2.1, double.NaN, double.PositiveInfinity })
+        {
+            bool rejected = false; try { ContainerOptions.ValidateFontScale(invalidScale); } catch (ArgumentException) { rejected = true; }
+            assert(rejected,"invalid Android font size rejected: " + invalidScale);
+        }
         var runtime = new RuntimeController(root,new ContainerOptions()); runtime.ConfigureAvd();
         string config = File.ReadAllText(Path.Combine(root,"private-data","avd","Astro_Play.avd","config.ini"));
         assert(config.Contains("hw.lcd.width=2560") && config.Contains("hw.lcd.height=800") && config.Contains("hw.accelerometer=no") && config.Contains("hw.initialOrientation=landscape"), "tablet uses one landscape framebuffer without rotation sensor");

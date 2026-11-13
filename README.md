@@ -4,6 +4,12 @@ Experimental Windows launcher for the **original ASIAIR and Stellavita Android a
 
 **Source and experimental installer.** [Download the Windows installer ZIP](https://github.com/Xee-Astro/Astro-Portal/releases/tag/v0.5.0-preview). No vendor APKs, Google Play images, Android emulator runtime, personal profiles, or private signing keys are bundled in the installer. The launcher includes its own .NET runtime. The Android SDK has restrictions on redistribution and permitted use. This project has **not** received vendor approval or a legal compliance certification. Read [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing review](docs/LICENSING_REVIEW.md) before building, downloading dependencies, or distributing a package.
 
+## Version 0.5.1 patch
+
+Already running 0.5.0? Download the [small 0.5.1 patch](https://github.com/Xee-Astro/Astro-Portal/releases/tag/v0.5.1-preview), close the launcher and Android, extract the patch elsewhere, run `Apply-Patch.cmd`, and choose your existing installation folder. It backs up the old launcher and preserves Android, apps, accounts, settings and notes. No Android download is required.
+
+New: dashboard Android font **A− / A+**, percentage and Reset controls (80%–200%, 10% steps), applied live or saved for the next boot. Both apps share the setting; app text drawn at a fixed size may not follow it.
+
 ## Features
 
 - Red ASIAIR and blue Stellavita launch/install controls; yellow running indicators and per-app termination.

@@ -43,6 +43,7 @@ public sealed partial class MainWindow
         AddAppButton(apps, "Back", () => runtime.NavigateAsync(false, lifetime.Token));
         
         
+        BuildAndroidFontControls(apps);
         Grid.SetRow(apps, 2); content.Children.Add(apps);
         var locations = new StackPanel { Margin = new(0, 10, 0, 10) };
         var line = new WrapPanel(); line.Children.Add(new TextBlock { Text = "Latitude", VerticalAlignment = VerticalAlignment.Center, Margin = new(0, 0, 8, 0) }); line.Children.Add(latitude);

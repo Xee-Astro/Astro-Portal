@@ -59,6 +59,7 @@ public static class Program
             if (args.Contains("--verify-keyboard")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyKeyboardWindowAsync(); };
             if (args.Contains("--verify-portal")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyPortalAsync(); };
             if (args.Contains("--verify-toolbar")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyToolbarAsync(); };
+            if (args.Contains("--verify-font")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyAndroidFontAsync(); };
             if (args.Contains("--verify-ui")) window.Loaded += async (_, _) => { if (verificationStarted) return; verificationStarted = true; await window.VerifyPortalUiAsync(); };
             window.Show();
         };
