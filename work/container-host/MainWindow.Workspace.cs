@@ -20,7 +20,7 @@ public sealed partial class MainWindow
     {
         if (feedingLocation || busy || closing || verificationMode || !runtime.IsRunning || settings.Latitude is not double lat || settings.Longitude is not double lon) return;
         feedingLocation = true;
-        try { await runtime.FeedLocationAsync(lat, lon, lifetime.Token); if (cloneRuntime is { IsRunning: true }) await cloneRuntime.FeedLocationAsync(lat,lon,lifetime.Token); }
+        try { await runtime.FeedLocationAsync(lat, lon, lifetime.Token); }
         catch (OperationCanceledException) { }
         catch (Exception error) { if (runtime.IsRunning && !closing) Trace("GPS forwarding will retry: " + error.Message); }
         finally { feedingLocation = false; }
@@ -35,7 +35,7 @@ public sealed partial class MainWindow
             if (runtime.IsRunning)
             {
                 await RefreshAppStateAsync();
-                if (await runtime.NeedsAppDisplayNormalizationAsync(lifetime.Token) || cloneRuntime is { IsRunning: true } && await cloneRuntime.NeedsAppDisplayNormalizationAsync(lifetime.Token)) await RunWorkspaceActionAsync(async () => { await runtime.NormalizeAppDisplaysAsync(lifetime.Token); if (cloneRuntime is { IsRunning: true }) await cloneRuntime.NormalizeAppDisplaysAsync(lifetime.Token); }, false);
+                if (await runtime.NeedsAppDisplayNormalizationAsync(lifetime.Token)) await RunWorkspaceActionAsync(async () => { await runtime.NormalizeAppDisplaysAsync(lifetime.Token); }, false);
             }
         }
         catch { hasAstroApp = false; }

@@ -34,7 +34,7 @@ public sealed partial class MainWindow
         foreach (var field in new[] { latitude, longitude }) { field.Height = 36; field.Padding = new(8, 2, 8, 2); }
         locationStatus.Text = settings.Latitude.HasValue ? "Saved location: " + settings.LocationSource : "Location not set. Use PC location or enter latitude and longitude.";
         var apps = new WrapPanel { Margin = new(0, 0, 0, 12) };
-        start.Margin = new(0, 0, 8, 0); apps.Children.Add(DashboardAppTile(start, false)); apps.Children.Add(DashboardAppTile(stellaStart, true)); AddCloneLaunchControls(apps); apps.Children.Add(others); apps.Children.Add(splitScreen); apps.Children.Add(fullScreenButton); apps.Children.Add(autoStartAndroid); var notes = ToolButton("Notes"); notes.Click += (_, _) => ShowNotes(); apps.Children.Add(notes); var advanced = ToolButton("Advanced"); advanced.Click += (_, _) => ShowAdvanced(); apps.Children.Add(advanced);
+        start.Margin = new(0, 0, 8, 0); apps.Children.Add(AppTile(start, false)); apps.Children.Add(AppTile(stellaStart, true)); apps.Children.Add(others); apps.Children.Add(splitScreen); apps.Children.Add(fullScreenButton); apps.Children.Add(autoStartAndroid); var notes = ToolButton("Notes"); notes.Click += (_, _) => ShowNotes(); apps.Children.Add(notes); var advanced = ToolButton("Advanced"); advanced.Click += (_, _) => ShowAdvanced(); apps.Children.Add(advanced);
         stellaStart.Click += async (_, _) => await OpenOrInstallAsync(true);
         others.Click += async (_, _) => await RunWorkspaceActionAsync(OpenOthersDrawerAsync);
         splitScreen.Click += async (_, _) => await RunWorkspaceActionAsync(ShowWorkspaceSplitAsync, false);
@@ -86,7 +86,7 @@ public sealed partial class MainWindow
         if (dialog.ShowDialog(this) != true) return;
         await RunWorkspaceActionAsync(async () => { status.Text = "Installing the selected app…"; await runtime.ShowOthersAsync(lifetime.Token); await runtime.InstallApksAsync(dialog.FileNames, lifetime.Token); RenderUpdateStatus(); }, false);
     }
-    private ContainerOptions CurrentOptions() => settings with { AutomaticUpdateChecks = automaticUpdates.IsChecked == true, UseWindowsLocation = windowsLocation.IsChecked == true, AutoStartAndroid = autoStartAndroid.IsChecked == true, CloneAsiair = cloneAsiair.IsChecked == true, CloneStellavita = cloneStellavita.IsChecked == true, PhoneGpsIp = phoneIp.Text.Trim(), PhoneGpsPort = int.TryParse(phonePort.Text, out int parsedPort) ? parsedPort : 0 };
+    private ContainerOptions CurrentOptions() => settings with { AutomaticUpdateChecks = automaticUpdates.IsChecked == true, UseWindowsLocation = windowsLocation.IsChecked == true, AutoStartAndroid = autoStartAndroid.IsChecked == true, PhoneGpsIp = phoneIp.Text.Trim(), PhoneGpsPort = int.TryParse(phonePort.Text, out int parsedPort) ? parsedPort : 0 };
     private void SaveToolOptions()
     {
         try { var changed = CurrentOptions(); changed.Save(root); settings = changed; } catch (Exception error) { status.Text = error.Message; }

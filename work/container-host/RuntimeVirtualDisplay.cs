@@ -105,38 +105,4 @@ public sealed partial class RuntimeController
         foreach (var display in appDisplays.Values) display.Dispose();
         appDisplays.Clear();
     }
-    public async Task CopyInstalledAppToAsync(RuntimeController destination, string package, CancellationToken token)
-    {
-        if (package is not (AsiairPackage or StellavitaPackage)) throw new ArgumentException("Unsupported app.");
-        if (!IsRunning || !destination.IsRunning) throw new InvalidOperationException("Both Android profiles must be ready.");
-        if (package == AsiairPackage) await EnsureNativeAsiairAsync(token);
-        string sourceVersion = await ShellAsync(token, "dumpsys", "package", package);
-        string targetVersion = await destination.ShellAsync(token, "dumpsys", "package", package);
-        string Version(string detail) => System.Text.RegularExpressions.Regex.Match(detail, @"\bversionCode=(\d+)").Groups[1].Value;
-        if (Version(sourceVersion).Length > 0 && Version(sourceVersion) == Version(targetVersion) && targetVersion.Contains("primaryCpuAbi=x86_64")) return;
-        string listing = await ShellAsync(token, "pm", "path", package);
-        string transfer = Path.Combine(state, "clone-transfer"); Directory.CreateDirectory(transfer);
-        var paths = new List<string>();
-        try
-        {
-            foreach (string line in listing.Split('\n').Where(l => l.StartsWith("package:")))
-            {
-                string path = Path.Combine(transfer, "part-" + paths.Count + ".apk"); paths.Add(path);
-                await AdbAsync(["-s", Serial, "pull", line[8..].Trim(), path], token, 180);
-            }
-            if (paths.Count == 0) throw new IOException("Install the main app before starting its clone.");
-            await destination.AdbAsync(new[] { "-s",destination.Serial, paths.Count == 1 ? "install" : "install-multiple", "-r","-g","--abi","x86_64" }.Concat(paths),token,600,false);
-            for (int i=0;i<60;i++)
-            {
-                try
-                {
-                    string detail = await destination.ShellAsync(token,"dumpsys","package",package);
-                    if (Version(sourceVersion) == Version(detail) && detail.Contains("primaryCpuAbi=x86_64")) { await destination.RecordInstalledVersionAsync(token); return; }
-                } catch (IOException) { }
-                await Task.Delay(1000,token);
-            }
-            throw new IOException("Android did not confirm the cloned x86-64 app installation. Retry its launch button.");
-        }
-        finally { foreach (string path in paths) if (File.Exists(path)) File.Delete(path); }
-    }
 }

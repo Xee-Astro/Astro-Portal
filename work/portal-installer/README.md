@@ -18,10 +18,8 @@ Notes are saved locally. Passwords are encrypted for the current Windows account
 
 Temporary downloads use a uniquely named `Astro-Portal-temp-â€¦` folder beside `Install.cmd`, on the drive where setup was extracted. That folder is deleted after successful installation. The setup location must be writable and have enough space for the largest download (about 1.3 GiB plus a safety margin). The destination drive is checked separately for installation/extraction space. Interrupted installations may retain their temporary folder for inspection. The extracted setup package itself is kept.
 
-## Clones and workspace
+## Static splash and workspace
 
-Clone checkboxes reveal ASIAIR 2 / Stellavita 2. A second persistent Android profile starts only when a clone is launched. It copies installed APKs, without copying accounts or app data. Allow 8-12 GiB additional free disk space and up to 3 GiB additional guest RAM; 16 GiB PC RAM is recommended for four apps. Split screen lets you toggle the four astronomy panes and Other (main Android); hidden panes keep running. Double-click a pane badge for fullscreen; exit restores your selection. Android font size is limited to 80%-130%, shared across both profiles with location.
+The supplied splash is static while Android is stopped or booting. There is no portal rotation or ASTRO consumption. Clone controls and second-profile launching are removed. Existing second-profile data is retained but unused. Split screen keeps ASIAIR, Stellavita and Other (main Android) toggles. Hidden panes keep running; double-click a pane badge for fullscreen and exit to restore your selection. Font size remains 80%-130%.
 
-Existing 0.5.0/0.5.1 users should use the small 0.6.0 patch instead of installing over their populated folder. The original blue portal icon is included under the project MIT license.
-
-The supplied splash remains visible while Android is stopped. Both portals rotate within their projected planes. During boot, ASTRO is drawn into the upper ring, completing only when Android is ready. Failed or cancelled starts restore the splash. Windows animation preferences are respected.
+Existing 0.5.0, 0.5.1 and 0.6.0 users can apply the small 0.6.1 patch instead of installing over a populated destination.

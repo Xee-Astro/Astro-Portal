@@ -42,7 +42,6 @@ public sealed partial class MainWindow
         {
             var changed = CurrentOptions() with { AndroidFontScale = scale };
             if (runtime.IsRunning) await runtime.SetAndroidFontScaleAsync(scale, lifetime.Token);
-            if (cloneRuntime is { IsRunning: true }) await cloneRuntime.SetAndroidFontScaleAsync(scale,lifetime.Token);
             changed.Save(root); settings = changed;
         }
         if (runtime.IsRunning) await RunWorkspaceActionAsync(Apply, false);

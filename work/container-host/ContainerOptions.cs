@@ -16,8 +16,6 @@ public sealed record ContainerOptions
     public int AdbPort { get; init; } = 5039;
     public bool EnablePlayStore { get; init; } = true;
     public int AndroidApi { get; init; } = 30;
-    public bool CloneAsiair { get; init; }
-    public bool CloneStellavita { get; init; }
     public bool AutoStartAndroid { get; init; }
     public string PhoneGpsIp { get; init; } = "";
     public int PhoneGpsPort { get; init; } = 11123;

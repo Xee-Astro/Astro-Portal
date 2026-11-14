@@ -45,19 +45,28 @@ public sealed partial class MainWindow
             if (largerAndroidFont.IsEnabled) throw new IOException("Font maximum was not enforced.");
             await ChangeAndroidFontAsync(1.0);
             if (resetAndroidFont.IsEnabled) throw new IOException("Font reset state was not cleared.");
-            cloneAsiair.IsChecked = cloneStellavita.IsChecked = true; SaveToolOptions(); UpdateMultiWorkspaceControls();
-            if (asiair2Tile?.Visibility != Visibility.Visible || stellavita2Tile?.Visibility != Visibility.Visible || asiair2Start.IsEnabled || stellavita2Start.IsEnabled) throw new IOException("Clone launch controls did not respect installation state.");
-            if (!ContainerOptions.Load(root).CloneAsiair || !ContainerOptions.Load(root).CloneStellavita) throw new IOException("Clone checkbox preferences were not saved.");
-            Capture(this, "Astro-Portal-dashboard");
-            await Task.Delay(350); Capture(this,"Astro-Portal-portals-rotated");
-            if (SystemParameters.ClientAreaAnimation && File.ReadAllBytes(Path.Combine(root,"Astro-Portal-dashboard.png")).SequenceEqual(File.ReadAllBytes(Path.Combine(root,"Astro-Portal-portals-rotated.png")))) throw new IOException("The stopped-screen portals are not animating.");
+            if (paneSurfaces.Count != 3 || presentationNavigation.Count != 3) throw new IOException("Removed clone panes remain in navigation.");
+            bool HasCloneControl(DependencyObject node)
+            {
+                if (node is CheckBox c && Equals(c.Content,"Clone") || node is Button b && b.Content is string text && text is "ASIAIR 2" or "Stellavita 2") return true;
+                for (int i=0;i<VisualTreeHelper.GetChildrenCount(node);i++) if (HasCloneControl(VisualTreeHelper.GetChild(node,i))) return true;
+                return false;
+            }
+            if (HasCloneControl(this)) throw new IOException("Clone controls remain visible.");
+            byte[] SplashPixels(PortalSplash splash)
+            {
+                splash.UpdateLayout(); var image = new RenderTargetBitmap((int)splash.ActualWidth,(int)splash.ActualHeight,96,96,PixelFormats.Pbgra32); image.Render(splash);
+                var pixels = new byte[image.PixelWidth*image.PixelHeight*4]; image.CopyPixels(pixels,image.PixelWidth*4,0); return pixels;
+            }
+            Capture(this,"Astro-Portal-dashboard");
             if (placeholder.Visibility != Visibility.Visible) throw new IOException("Stopped Android splash is missing.");
-            SetLoading(true); loadingSplash.Progress = .52; Capture(this,"Astro-Portal-boot-consuming");
-            await loadingSplash.CompleteBootAsync();
-            if (loadingSplash.Progress != 1) throw new IOException("The splash did not fully consume ASTRO on completion.");
-            Capture(this,"Astro-Portal-boot-complete"); SetLoading(false);
-            if (loadingOverlay.Visibility != Visibility.Collapsed || loadingSplash.Progress != 0) throw new IOException("Splash did not reset after boot/cancellation.");
-
+            var stoppedPixels = SplashPixels(placeholder); await Task.Delay(350);
+            if (!stoppedPixels.SequenceEqual(SplashPixels(placeholder))) throw new IOException("Stopped splash is animated.");
+            SetLoading(true); UpdateLayout(); Capture(this,"Astro-Portal-static-loading");
+            var loadingPixels = SplashPixels(loadingSplash); await Task.Delay(350);
+            if (!loadingPixels.SequenceEqual(SplashPixels(loadingSplash)) || !stoppedPixels.SequenceEqual(loadingPixels)) throw new IOException("Loading artwork changed or consumed ASTRO.");
+            SetLoading(false);
+            if (loadingOverlay.Visibility != Visibility.Collapsed || placeholder.Visibility != Visibility.Visible) throw new IOException("Static splash did not restore after cancellation.");
             async Task Inspect(Action show, string name)
             {
                 Exception? failure = null;
@@ -66,7 +75,7 @@ public sealed partial class MainWindow
                 timer.Start(); show(); if (failure is not null) throw failure; await Task.Delay(50);
             }
             await Inspect(ShowNotes, "Astro-Portal-notes"); await Inspect(ShowAdvanced, "Astro-Portal-advanced");
-            File.WriteAllText(result, "{\"passed\":true,\"freshInstallLabels\":true,\"unavailableControlsDisabled\":true,\"notesWindow\":true,\"advancedWindow\":true,\"textFieldHeight\":true,\"stoppedSplash\":true,\"bootConsumption\":true,\"splashReset\":true}");
+            File.WriteAllText(result, "{\"passed\":true,\"freshInstallLabels\":true,\"unavailableControlsDisabled\":true,\"notesWindow\":true,\"advancedWindow\":true,\"textFieldHeight\":true,\"stoppedSplash\":true,\"staticLoadingSplash\":true,\"noCloneControls\":true,\"threePaneNavigation\":true,\"splashReset\":true}");
         }
         catch (Exception error) { Environment.ExitCode = 1; File.WriteAllText(result, JsonSerializer.Serialize(new { passed = false, error = error.ToString() })); }
         finally { Close(); }

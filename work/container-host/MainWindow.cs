@@ -66,12 +66,11 @@ public sealed partial class MainWindow : Window
             workspaceSurface.Visibility = Visibility.Visible; view.Visibility = Visibility.Visible; UpdateLayout(); view.UpdateLayout(); view.Attach(window); view.SetInputEnabled(!busy); placeholder.Visibility = Visibility.Collapsed;
             status.Text = "Android is ready."; await RefreshAppStateAsync();
             RenderUpdateStatus();
-            SetWorkspaceLoading(true); await loadingSplash.CompleteBootAsync();
         }
         catch (Exception error)
         {
             Trace(error.ToString());
-            view.Detach(); view.Visibility = Visibility.Collapsed; workspaceSurface.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible; placeholder.Reset();
+            view.Detach(); view.Visibility = Visibility.Collapsed; workspaceSurface.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible;
             try { await runtime.StopAsync(); } catch { }
             status.Text = error is OperationCanceledException ? "Startup cancelled." : error.Message;
         }
@@ -79,7 +78,7 @@ public sealed partial class MainWindow : Window
     }
     private async Task StopAsync()
     {
-        operation?.Cancel(); locationRequest?.Cancel(); SetBusy(true); appDrawer.Visibility = Visibility.Collapsed; view.Detach(); view.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible; placeholder.Reset();
+        operation?.Cancel(); locationRequest?.Cancel(); SetBusy(true); appDrawer.Visibility = Visibility.Collapsed; view.Detach(); view.Visibility = Visibility.Collapsed; placeholder.Visibility = Visibility.Visible;
         ExitFullScreen(); hasAstroApp = false;
         try { await StopMultiWorkspaceAsync(); workspaceSurface.Visibility = Visibility.Collapsed; await runtime.StopAsync(); } catch (Exception error) { status.Text = error.Message; }
         finally { SetBusy(false); UpdatePresentationButtons(); }

@@ -30,10 +30,10 @@ public sealed partial class RuntimeController : IAsyncDisposable
     private int ImageApi => options.EnablePlayStore ? options.AndroidApi : 30;
     private string ImageTag => options.EnablePlayStore ? "google_apis_playstore" : "google_apis";
     public string StateDirectory => state;
-    public RuntimeController(string root, ContainerOptions options, bool secondProfile = false)
+    public RuntimeController(string root, ContainerOptions options)
     {
         this.root = Path.GetFullPath(root); this.options = options;
-        sdk = Path.Combine(root, "runtime", "sdk"); state = secondProfile ? Path.Combine(root, "private-data", "profiles", "second") : Path.Combine(root, "private-data"); adb = Path.Combine(sdk, "platform-tools", "adb.exe");
+        sdk = Path.Combine(root, "runtime", "sdk"); state = Path.Combine(root, "private-data"); adb = Path.Combine(sdk, "platform-tools", "adb.exe");
     }
     public void SetOptions(ContainerOptions value) { if (IsRunning) throw new InvalidOperationException("Stop the runtime before changing settings."); value.Validate(); options = value; }
     private void Stage(string value) { Status?.Invoke(value); Log?.Invoke(value); }

@@ -1,12 +1,11 @@
 namespace AsiairContainer;
 
-public enum WorkspacePane { Asiair, Asiair2, Stellavita, Stellavita2, Other }
+public enum WorkspacePane { Asiair, Stellavita, Other }
 public sealed record PanePlacement(WorkspacePane Pane, int Row, int Column, int ColumnSpan);
 public static class WorkspacePanes
 {
-    public static string Label(WorkspacePane pane) => pane switch { WorkspacePane.Asiair => "ASIAIR", WorkspacePane.Asiair2 => "ASIAIR 2", WorkspacePane.Stellavita => "Stellavita", WorkspacePane.Stellavita2 => "Stellavita 2", _ => "Other" };
-    public static string? Package(WorkspacePane pane) => pane switch { WorkspacePane.Asiair or WorkspacePane.Asiair2 => RuntimeController.AsiairPackage, WorkspacePane.Stellavita or WorkspacePane.Stellavita2 => RuntimeController.StellavitaPackage, _ => null };
-    public static bool IsClone(WorkspacePane pane) => pane is WorkspacePane.Asiair2 or WorkspacePane.Stellavita2;
+    public static string Label(WorkspacePane pane) => pane switch { WorkspacePane.Asiair => "ASIAIR", WorkspacePane.Stellavita => "Stellavita", _ => "Other" };
+    public static string? Package(WorkspacePane pane) => pane switch { WorkspacePane.Asiair => RuntimeController.AsiairPackage, WorkspacePane.Stellavita => RuntimeController.StellavitaPackage, _ => null };
     public static IReadOnlyList<PanePlacement> Arrange(IEnumerable<WorkspacePane> panes)
     {
         var items = panes.Distinct().Order().ToArray();

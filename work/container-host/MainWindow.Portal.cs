@@ -20,7 +20,7 @@ public sealed partial class MainWindow
         var grid = new Grid { Margin = new(0, 0, 8, 0) };
         launch.Margin = new(0); launch.MinWidth = 140; launch.MinHeight = 44; launch.Padding = new(15, 9, 32, 9);
         grid.Children.Add(launch);
-        var kill = ToolButton("Ã—"); kill.ToolTip = "Close " + (stella ? "Stellavita" : "ASIAIR");
+        var kill = ToolButton("×"); kill.ToolTip = "Close " + (stella ? "Stellavita" : "ASIAIR");
         kill.Tag = stella ? "Stellavita" : "ASIAIR"; kill.Padding = new(3, 0, 3, 0); kill.FontSize = 17;
         kill.Width = 24; kill.Height = 24; kill.Margin = new(0, 3, 3, 0); kill.HorizontalAlignment = HorizontalAlignment.Right;
         kill.VerticalAlignment = VerticalAlignment.Top; kill.Visibility = Visibility.Collapsed;
@@ -100,15 +100,14 @@ public sealed partial class MainWindow
     {
         SetWorkspaceLoading(show);
         loadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        if (show) loadingSplash.BeginBoot(); else loadingSplash.Reset();
     }
     private Window SecondaryWindow(string name, UIElement body, double width = 760, double height = 600)
     {
-        var window = new Window { Owner = this, Icon = Icon, Title = "Astro - Portal Â· " + name, Width = width, Height = height, MinWidth = 520, MinHeight = 400, Background = Background, Foreground = Foreground, FontFamily = FontFamily, FontSize = FontSize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var window = new Window { Owner = this, Icon = Icon, Title = "Astro - Portal · " + name, Width = width, Height = height, MinWidth = 520, MinHeight = 400, Background = Background, Foreground = Foreground, FontFamily = FontFamily, FontSize = FontSize, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         window.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/AsiairContainer;component/Theme.xaml", UriKind.Relative) });
         var dock = new DockPanel { Margin = new(20) };
         var header = new DockPanel { Margin = new(0, 0, 0, 18) };
-        var close = ToolButton("Ã—"); close.FontSize = 22; close.ToolTip = "Close " + name; DockPanel.SetDock(close, Dock.Right); close.Click += (_, _) => window.Close(); header.Children.Add(close);
+        var close = ToolButton("×"); close.FontSize = 22; close.ToolTip = "Close " + name; DockPanel.SetDock(close, Dock.Right); close.Click += (_, _) => window.Close(); header.Children.Add(close);
         header.Children.Add(new TextBlock { Text = name, FontSize = 25, VerticalAlignment = VerticalAlignment.Center }); DockPanel.SetDock(header, Dock.Top); dock.Children.Add(header);
         dock.Children.Add(new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }); window.Content = dock; return window;
     }
@@ -125,7 +124,7 @@ public sealed partial class MainWindow
         var panel = new StackPanel();
         var tools = new WrapPanel();
         var play = ToolButton("Google Play"); play.Click += async (_, _) => { secondary?.Close(); await RunWorkspaceActionAsync(async () => { await OpenPaneAsync(WorkspacePane.Other); await runtime.LaunchAppAsync("com.android.vending", lifetime.Token); }); }; tools.Children.Add(play);
-        var install = ToolButton("Install APKâ€¦"); install.Click += async (_, _) => { secondary?.Close(); await InstallApksAsync(); }; tools.Children.Add(install);
+        var install = ToolButton("Install APK…"); install.Click += async (_, _) => { secondary?.Close(); await InstallApksAsync(); }; tools.Children.Add(install);
         if (stop.Parent is Panel old) old.Children.Remove(stop);
         tools.Children.Add(stop); panel.Children.Add(tools);
         panel.Children.Add(new TextBlock { Text = "Use Install APK to select a single APK or every file in a matching split APK set. Android uses a fixed landscape tablet display. App data stays in private-data. Location settings on the dashboard apply to all Android apps.", TextWrapping = TextWrapping.Wrap, Foreground = Brush("#B8C5D6"), Margin = new(0, 24, 0, 0) });

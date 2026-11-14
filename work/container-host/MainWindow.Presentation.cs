@@ -24,7 +24,7 @@ public sealed partial class MainWindow
         void Add(WorkspacePane id)
         {
             var button = ToolButton(WorkspacePanes.Label(id)); button.DataContext = id;
-            button.Tag = id is WorkspacePane.Asiair or WorkspacePane.Asiair2 ? "ASIAIR" : id is WorkspacePane.Stellavita or WorkspacePane.Stellavita2 ? "Stellavita" : null;
+            button.Tag = id is WorkspacePane.Asiair ? "ASIAIR" : id is WorkspacePane.Stellavita ? "Stellavita" : null;
             button.Click += async (_, _) => await RunWorkspaceActionAsync(() => OpenPaneAsync(id)); bar.Children.Add(button); presentationNavigation.Add(button);
         }
         foreach (var id in Enum.GetValues<WorkspacePane>()) Add(id);
@@ -41,7 +41,6 @@ public sealed partial class MainWindow
         foreach (var button in presentationNavigation)
         {
             var id = (WorkspacePane)button.DataContext;
-            button.Visibility = id == WorkspacePane.Asiair2 && !settings.CloneAsiair || id == WorkspacePane.Stellavita2 && !settings.CloneStellavita ? Visibility.Collapsed : Visibility.Visible;
             button.IsEnabled = !busy && (Equals(button.Tag,"ASIAIR") ? asiairInstalled : Equals(button.Tag,"Stellavita") ? stellaInstalled : true);
         }
         if (presentationExit is not null) presentationExit.IsEnabled = !busy;

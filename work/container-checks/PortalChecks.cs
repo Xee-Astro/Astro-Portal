@@ -50,9 +50,10 @@ public static class PortalChecks
         }
         File.WriteAllText(Path.Combine(root,"container.json"),"{\"AndroidFontScale\":1.4}");
         assert(ContainerOptions.Load(root).AndroidFontScale == 1.3, "unsupported saved font size migrates to 130 percent");
-        var clones = new ContainerOptions { CloneAsiair = true, CloneStellavita = true }; clones.Save(root);
-        assert(ContainerOptions.Load(root).CloneAsiair && ContainerOptions.Load(root).CloneStellavita, "clone launch preferences persist");
-        foreach (int count in Enumerable.Range(1,5))
+        File.WriteAllText(Path.Combine(root,"container.json"),"{\"CloneAsiair\":true,\"CloneStellavita\":true,\"AndroidFontScale\":1.2}");
+        var migrated = ContainerOptions.Load(root); migrated.Save(root);
+        assert(migrated.AndroidFontScale == 1.2 && !File.ReadAllText(Path.Combine(root,"container.json")).Contains("CloneAsiair"),"legacy clone flags are ignored while supported settings persist");
+        foreach (int count in Enumerable.Range(1,3))
         {
             var panes = Enum.GetValues<WorkspacePane>().Take(count).ToArray(); var placement = WorkspacePanes.Arrange(panes);
             var cells = new HashSet<(int Row,int Column)>(); bool overlap = false;
@@ -60,10 +61,10 @@ public static class PortalChecks
             assert(placement.Count == count && !overlap,"workspace lays out " + count + " distinct panes without overlap");
         }
         assert(WorkspacePanes.Arrange(new[] { WorkspacePane.Asiair, WorkspacePane.Asiair }).Count == 1,"duplicate pane selections collapse safely");
-        assert(WorkspacePanes.IsClone(WorkspacePane.Asiair2) && WorkspacePanes.IsClone(WorkspacePane.Stellavita2) && !WorkspacePanes.IsClone(WorkspacePane.Other),"clone identities are separate from the main Android home");
-        var isolated = new RuntimeController(root,new ContainerOptions(),true);
-        assert(isolated.StateDirectory != Path.Combine(root,"private-data") && isolated.StateDirectory.EndsWith(Path.Combine("profiles","second")),"second profile cannot overwrite original Android data");
+        assert(Enum.GetValues<WorkspacePane>().Select(WorkspacePanes.Label).SequenceEqual(new[] { "ASIAIR","Stellavita","Other" }),"workspace exposes only the two original apps and main Android");
+        string archivedProfile = Path.Combine(root,"private-data","profiles","second","sentinel.txt"); Directory.CreateDirectory(Path.GetDirectoryName(archivedProfile)!); File.WriteAllText(archivedProfile,"preserve-old-clone-data");
         var runtime = new RuntimeController(root,new ContainerOptions()); runtime.ConfigureAvd();
+        assert(File.ReadAllText(archivedProfile) == "preserve-old-clone-data","configuring the main runtime preserves old clone data");
         string config = File.ReadAllText(Path.Combine(root,"private-data","avd","Astro_Play.avd","config.ini"));
         assert(config.Contains("hw.lcd.width=2560") && config.Contains("hw.lcd.height=800") && config.Contains("hw.accelerometer=no") && config.Contains("hw.initialOrientation=landscape"), "tablet uses one landscape framebuffer without rotation sensor");
     }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1-preview — 2026-11-15
+
+- Restore the supplied static splash while Android is stopped or loading; remove rotation and ASTRO consumption.
+- Remove Clone checkboxes, ASIAIR 2 / Stellavita 2 controls and second-profile launching.
+- Preserve existing second-profile files without using them.
+- Retain selectable ASIAIR, Stellavita and Other panes, badge fullscreen/restore, blue branding, font fix and location support.
+- Five-file data-preserving patch for 0.5.0, 0.5.1 and 0.6.0, plus clean full setup.
+
 ## 0.6.0-preview
 
 - Persistent ASIAIR 2 and Stellavita 2 via an isolated second Android profile.
@@ -21,4 +29,5 @@
 ## 0.5.0
 
 Initial experimental Windows launcher/installer with dual-app layouts, official app installation/update checks, location forwarding, persistent Notes, landscape compatibility, and native Windows input.
+
 
